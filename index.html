@@ -642,6 +642,173 @@
 
   .other-signal-insight strong { color: var(--text); font-weight: 400; }
 
+  /* DATE PICKER FOR BACK-FILL */
+  .date-picker-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .date-picker-bar label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .date-picker-bar input[type="date"] {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    color-scheme: dark;
+  }
+
+  .date-picker-bar input[type="date"]:focus {
+    border-color: rgba(201,169,110,0.4);
+  }
+
+  .date-indicator {
+    font-size: 11px;
+    color: var(--accent);
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+  }
+
+  /* HISTORY SUB-TABS */
+  .history-subtabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 20px;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .history-subtab {
+    flex: 1;
+    padding: 7px 4px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border-radius: 5px;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    border: none;
+    background: none;
+  }
+
+  .history-subtab.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  /* PERIOD SELECTOR */
+  .period-selector {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .period-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--text-muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .period-btn.active {
+    background: var(--accent-soft);
+    border-color: rgba(201,169,110,0.4);
+    color: var(--accent);
+  }
+
+  /* PROGRESSION CHART */
+  .progression-view { display: none; }
+  .progression-view.visible { display: block; }
+  .log-view { display: block; }
+  .log-view.hidden { display: none; }
+
+  .need-progress-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .need-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .need-progress-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--text);
+  }
+
+  .need-progress-stats {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .need-avg {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--accent);
+  }
+
+  .need-avg.low { color: var(--warn); }
+
+  .need-trend {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+
+  .need-trend.up { color: var(--good); background: var(--good-soft); }
+  .need-trend.down { color: var(--warn); background: var(--warn-soft); }
+  .need-trend.flat { color: var(--text-muted); background: var(--surface2); }
+
+  /* SPARKLINE */
+  .sparkline-wrap {
+    width: 100%;
+    height: 36px;
+    position: relative;
+  }
+
+  .sparkline-wrap svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -664,6 +831,13 @@
 
   <!-- CHECK-IN VIEW -->
   <div id="checkin-view">
+
+    <!-- DATE PICKER -->
+    <div class="date-picker-bar">
+      <label>Filling in for</label>
+      <input type="date" id="checkin-date" onchange="onDateChange()"/>
+      <span class="date-indicator" id="date-indicator">Today</span>
+    </div>
 
     <div class="signal-banner" id="signal-banner">
       <div class="signal-banner-title">⚠ Signal detected</div>
@@ -735,7 +909,28 @@
         <p id="ring-sub">Start checking in daily</p>
       </div>
     </div>
-    <div id="history-list"></div>
+
+    <!-- SUB-TABS -->
+    <div class="history-subtabs">
+      <button class="history-subtab active" onclick="showHistoryTab('log')">Daily log</button>
+      <button class="history-subtab" onclick="showHistoryTab('progression')">Progression</button>
+    </div>
+
+    <!-- LOG VIEW -->
+    <div class="log-view" id="log-view">
+      <div id="history-list"></div>
+    </div>
+
+    <!-- PROGRESSION VIEW -->
+    <div class="progression-view" id="progression-view">
+      <div class="period-selector">
+        <button class="period-btn active" onclick="setPeriod(7, this)">Week</button>
+        <button class="period-btn" onclick="setPeriod(30, this)">Month</button>
+        <button class="period-btn" onclick="setPeriod(365, this)">Year</button>
+        <button class="period-btn" onclick="setPeriod(730, this)">2 Years</button>
+      </div>
+      <div id="progression-list"></div>
+    </div>
   </div>
 
 </div>
@@ -781,7 +976,17 @@ const SIGNAL_MESSAGES = {
 
 let ratings = {};
 let activeSignals = new Set();
-let activeOtherSignal = null; // { text, needs, message }
+let activeOtherSignal = null;
+let selectedDate = todayKey();
+let progressionDays = 7;
+
+function todayKey() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function storageKey(date) {
+  return 'wt_' + (date || selectedDate);
+}
 
 // Keyword matching rules: each entry maps keywords to needs + a reflection message
 const SIGNAL_RULES = [
@@ -917,32 +1122,60 @@ function interpretOtherSignal() {
     btn.disabled = false;
   }, 600);
 }
-let storageKey = () => 'wt_' + new Date().toISOString().slice(0,10);
-
-function todayKey() {
-  return new Date().toISOString().slice(0,10);
-}
 
 function formatDate(d) {
-  return new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  // Parse as local date to avoid timezone shift
+  const [y,m,day] = d.split ? d.split('-') : [d.getFullYear(), d.getMonth()+1, d.getDate()];
+  return new Date(+y, +m-1, +day).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
 function init() {
-  document.getElementById('header-date').textContent = formatDate(new Date());
+  const today = todayKey();
+  selectedDate = today;
+  const dateInput = document.getElementById('checkin-date');
+  dateInput.value = today;
+  dateInput.max = today; // can't fill future dates
+  document.getElementById('header-date').textContent = formatDate(today);
   renderSignals();
   renderNeeds();
   checkAlreadyDone();
 }
 
-function checkAlreadyDone() {
-  const saved = loadToday();
-  if (saved) {
-    showCompleteState(saved);
-  }
+function onDateChange() {
+  const dateInput = document.getElementById('checkin-date');
+  selectedDate = dateInput.value;
+  const isToday = selectedDate === todayKey();
+  const indicator = document.getElementById('date-indicator');
+  indicator.textContent = isToday ? 'Today' : formatDate(selectedDate);
+  document.getElementById('header-date').textContent = formatDate(selectedDate);
+
+  // Reset form state
+  ratings = {};
+  activeSignals = new Set();
+  activeOtherSignal = null;
+  renderSignals();
+  renderNeeds();
+
+  // Reset other signal UI
+  document.getElementById('other-signal-input').value = '';
+  document.getElementById('other-signal-result').classList.remove('visible');
+  document.getElementById('other-signal-insight').innerHTML = '';
+  document.getElementById('signal-insight').classList.remove('visible');
+  document.getElementById('signal-banner').classList.remove('visible');
+
+  // Show form or complete state
+  document.getElementById('complete-state').classList.remove('visible');
+  document.getElementById('checkin-form').style.display = 'block';
+  checkAlreadyDone();
 }
 
-function loadToday() {
-  try { return JSON.parse(localStorage.getItem(storageKey())); } catch(e) { return null; }
+function checkAlreadyDone() {
+  const saved = loadForDate(selectedDate);
+  if (saved) showCompleteState(saved);
+}
+
+function loadForDate(date) {
+  try { return JSON.parse(localStorage.getItem(storageKey(date))); } catch(e) { return null; }
 }
 
 function renderSignals() {
@@ -1064,12 +1297,12 @@ function submitCheckin() {
     return;
   }
   const data = {
-    date: todayKey(),
+    date: selectedDate,
     ratings,
     signals: Array.from(activeSignals),
     otherSignal: activeOtherSignal ? activeOtherSignal.text : null,
   };
-  try { localStorage.setItem(storageKey(), JSON.stringify(data)); } catch(e) {}
+  try { localStorage.setItem(storageKey(selectedDate), JSON.stringify(data)); } catch(e) {}
   showCompleteState(data);
 }
 
@@ -1081,7 +1314,8 @@ function showCompleteState(data) {
   const vals = Object.values(data.ratings);
   const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '—';
   const low = NEEDS.filter(n => data.ratings[n.id] && data.ratings[n.id] <= 2).map(n => n.name);
-  let summary = `Average wellbeing today: <strong>${avg} / 5</strong>.`;
+  const dateLabel = data.date === todayKey() ? 'today' : formatDate(data.date);
+  let summary = `Check-in for ${dateLabel}: average <strong>${avg} / 5</strong>.`;
   if (low.length) summary += ` Needs that may need attention: ${low.join(', ')}.`;
   document.getElementById('complete-summary').innerHTML = summary;
 }
@@ -1093,8 +1327,30 @@ function showView(v) {
   if (v === 'history') renderHistory();
 }
 
-function renderHistory() {
-  const list = document.getElementById('history-list');
+function showHistoryTab(tab) {
+  const logEl = document.getElementById('log-view');
+  const progEl = document.getElementById('progression-view');
+  document.querySelectorAll('.history-subtab').forEach((t,i) =>
+    t.classList.toggle('active', (i===0&&tab==='log')||(i===1&&tab==='progression'))
+  );
+  if (tab === 'log') {
+    logEl.classList.remove('hidden');
+    progEl.classList.remove('visible');
+  } else {
+    logEl.classList.add('hidden');
+    progEl.classList.add('visible');
+    renderProgression();
+  }
+}
+
+function setPeriod(days, btn) {
+  progressionDays = days;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProgression();
+}
+
+function getAllEntries() {
   const entries = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -1105,24 +1361,27 @@ function renderHistory() {
       } catch(e) {}
     }
   }
-  entries.sort((a,b) => b.date.localeCompare(a.date));
+  return entries.sort((a,b) => a.date.localeCompare(b.date));
+}
 
+function renderHistory() {
+  const entries = getAllEntries().reverse();
+
+  // Update ring with all-time average
   if (!entries.length) {
-    list.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0">No check-ins yet. Start today.</p>';
+    document.getElementById('history-list').innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0">No check-ins yet. Start today.</p>';
     document.getElementById('ring-label').textContent = 'No data yet';
     document.getElementById('ring-sub').textContent = 'Start checking in daily';
     return;
   }
 
-  // Compute overall avg
   const allVals = entries.flatMap(e => Object.values(e.ratings));
   const overallAvg = allVals.length ? (allVals.reduce((a,b)=>a+b,0)/allVals.length) : 0;
-  const pct = overallAvg / 5;
-  document.getElementById('ring-progress').style.strokeDashoffset = 175.9 * (1 - pct);
+  document.getElementById('ring-progress').style.strokeDashoffset = 175.9 * (1 - overallAvg/5);
   document.getElementById('ring-label').textContent = overallAvg.toFixed(1) + ' / 5';
   document.getElementById('ring-sub').textContent = `Across ${entries.length} check-in${entries.length>1?'s':''}`;
 
-  list.innerHTML = entries.map(e => {
+  document.getElementById('history-list').innerHTML = entries.map(e => {
     const vals = Object.values(e.ratings);
     const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
     const sample = NEEDS.slice(0,10);
@@ -1147,6 +1406,71 @@ function renderHistory() {
         ${e.signals && e.signals.length ? `<p style="font-size:11px;color:var(--warn);margin-top:12px">⚠ Signals: ${e.signals.map(s=>SIGNALS.find(x=>x.id===s)?.label||s).join(', ')}${e.otherSignal ? ` · "${e.otherSignal}"` : ''}</p>` : (e.otherSignal ? `<p style="font-size:11px;color:var(--warn);margin-top:12px">⚠ Other signal: "${e.otherSignal}"</p>` : '')}
       </div>`;
   }).join('');
+}
+
+function renderProgression() {
+  const list = document.getElementById('progression-list');
+  const allEntries = getAllEntries();
+
+  // Filter to period
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - progressionDays);
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const entries = allEntries.filter(e => e.date >= cutoffStr);
+
+  if (entries.length < 2) {
+    list.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0">Not enough data for this period yet. Keep checking in.</p>';
+    return;
+  }
+
+  // For each need, compute avg, trend (first half vs second half), and sparkline points
+  const half = Math.floor(entries.length / 2);
+
+  list.innerHTML = NEEDS.map(n => {
+    const vals = entries.map(e => e.ratings[n.id] || null).filter(v => v !== null);
+    if (!vals.length) return '';
+
+    const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+    const firstHalf = entries.slice(0, half).map(e => e.ratings[n.id]).filter(Boolean);
+    const secondHalf = entries.slice(half).map(e => e.ratings[n.id]).filter(Boolean);
+    const avgFirst = firstHalf.length ? firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length : avg;
+    const avgSecond = secondHalf.length ? secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length : avg;
+    const diff = avgSecond - avgFirst;
+    const trendClass = diff > 0.3 ? 'up' : diff < -0.3 ? 'down' : 'flat';
+    const trendLabel = diff > 0.3 ? '↑ improving' : diff < -0.3 ? '↓ declining' : '→ steady';
+
+    // Sparkline: plot all ratings across period
+    const sparkVals = entries.map(e => e.ratings[n.id] || 0);
+    const svgW = 300, svgH = 36;
+    const pts = sparkVals.map((v, i) => {
+      const x = sparkVals.length === 1 ? svgW/2 : (i / (sparkVals.length-1)) * svgW;
+      const y = svgH - (v/5) * svgH;
+      return `${x},${y}`;
+    }).join(' ');
+
+    const sparkColor = avg <= 2 ? '#e07070' : '#c9a96e';
+
+    return `
+      <div class="need-progress-card">
+        <div class="need-progress-header">
+          <div class="need-progress-name">${n.name}</div>
+          <div class="need-progress-stats">
+            <div class="need-avg ${avg <= 2 ? 'low' : ''}">${avg.toFixed(1)}</div>
+            <div class="need-trend ${trendClass}">${trendLabel}</div>
+          </div>
+        </div>
+        <div class="sparkline-wrap">
+          <svg viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none">
+            <polyline points="${pts}" fill="none" stroke="${sparkColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+            ${sparkVals.map((v, i) => {
+              const x = sparkVals.length === 1 ? svgW/2 : (i / (sparkVals.length-1)) * svgW;
+              const y = svgH - (v/5) * svgH;
+              return `<circle cx="${x}" cy="${y}" r="3" fill="${sparkColor}"/>`;
+            }).join('')}
+          </svg>
+        </div>
+      </div>`;
+  }).filter(Boolean).join('');
 }
 
 // Register service worker
