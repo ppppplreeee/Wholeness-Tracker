@@ -13,806 +13,241 @@
 <title>Wholeness Tracker</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0e0e0e;
-    --surface: #161616;
-    --surface2: #1e1e1e;
-    --border: #2a2a2a;
-    --text: #e8e4dc;
-    --text-dim: #7a7570;
-    --text-muted: #444;
-    --accent: #c9a96e;
-    --accent-soft: rgba(201, 169, 110, 0.12);
-    --warn: #e07070;
-    --warn-soft: rgba(224, 112, 112, 0.1);
-    --good: #7cad8e;
-    --good-soft: rgba(124, 173, 142, 0.1);
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 300;
-    min-height: 100vh;
-    font-size: 14px;
-  }
-
-  /* NOISE TEXTURE */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.4;
-  }
-
-  .app {
-    position: relative;
-    z-index: 1;
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 40px 24px calc(80px + env(safe-area-inset-bottom)) 24px;
-    padding-top: max(40px, env(safe-area-inset-top));
-  }
-
-  /* HEADER */
-  .header {
-    margin-bottom: 48px;
-    animation: fadeUp 0.6s ease both;
-  }
-
-  .header-date {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-
-  .header h1 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 36px;
-    font-weight: 300;
-    font-style: italic;
-    color: var(--text);
-    line-height: 1.1;
-  }
-
-  .header-sub {
-    font-size: 13px;
-    color: var(--text-dim);
-    margin-top: 6px;
-  }
-
-  /* NAV TABS */
-  .tabs {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 36px;
-    background: var(--surface);
-    border-radius: 8px;
-    padding: 3px;
-    animation: fadeUp 0.6s 0.1s ease both;
-  }
-
-  .tab {
-    flex: 1;
-    padding: 8px;
-    text-align: center;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    border-radius: 6px;
-    color: var(--text-dim);
-    transition: all 0.2s;
-    border: none;
-    background: none;
-  }
-
-  .tab.active {
-    background: var(--surface2);
-    color: var(--text);
-  }
-
-  /* SIGNAL BANNER */
-  .signal-banner {
-    background: var(--warn-soft);
-    border: 1px solid rgba(224, 112, 112, 0.2);
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 28px;
-    animation: fadeUp 0.6s 0.15s ease both;
-    display: none;
-  }
-
-  .signal-banner.visible { display: block; }
-
-  .signal-banner-title {
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--warn);
-    margin-bottom: 8px;
-  }
-
-  .signal-banner p {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.5;
-  }
-
-  /* SECTION */
-  .section {
-    margin-bottom: 32px;
-    animation: fadeUp 0.6s ease both;
-  }
-
-  .section-title {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-    padding-left: 2px;
-  }
-
-  /* NEED CARD */
-  .need-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 18px;
-    margin-bottom: 8px;
-    transition: border-color 0.2s, background 0.2s;
-  }
-
-  .need-card:hover {
-    border-color: #333;
-  }
-
-  .need-card.rated {
-    border-color: rgba(201, 169, 110, 0.2);
-    background: rgba(201, 169, 110, 0.03);
-  }
-
-  .need-card.low-rated {
-    border-color: rgba(224, 112, 112, 0.2);
-    background: rgba(224, 112, 112, 0.03);
-  }
-
-  .need-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 12px;
-  }
-
-  .need-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--text);
-    line-height: 1.2;
-  }
-
-  .need-desc {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
-    line-height: 1.4;
-    max-width: 380px;
-  }
-
-  .need-score-display {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    font-weight: 300;
-    color: var(--text-muted);
-    min-width: 28px;
-    text-align: right;
-    transition: color 0.3s;
-  }
-
-  .need-score-display.has-value { color: var(--accent); }
-  .need-score-display.low { color: var(--warn); }
-
-  /* RATING DOTS */
-  .rating {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .rating-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    color: var(--text-muted);
-    transition: all 0.15s;
-    background: none;
-  }
-
-  .rating-dot:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  .rating-dot.selected {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--bg);
-    font-weight: 500;
-  }
-
-  .rating-dot.low.selected {
-    background: var(--warn);
-    border-color: var(--warn);
-  }
-
-  /* SIGNAL BEHAVIOURS */
-  .signal-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .signal-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 14px;
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .signal-item:hover {
-    border-color: rgba(224, 112, 112, 0.3);
-  }
-
-  .signal-item.active {
-    background: var(--warn-soft);
-    border-color: rgba(224, 112, 112, 0.35);
-  }
-
-  .signal-check {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
-  }
-
-  .signal-item.active .signal-check {
-    background: var(--warn);
-    border-color: var(--warn);
-  }
-
-  .signal-check svg { display: none; }
-  .signal-item.active .signal-check svg { display: block; }
-
-  .signal-label {
-    font-size: 12px;
-    color: var(--text-dim);
-    line-height: 1.3;
-  }
-
-  .signal-item.active .signal-label {
-    color: var(--warn);
-  }
-
-  /* INSIGHT BOX */
-  .insight-box {
-    background: var(--accent-soft);
-    border: 1px solid rgba(201, 169, 110, 0.2);
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin-top: 20px;
-    display: none;
-  }
-
-  .insight-box.visible { display: block; }
-
-  .insight-title {
-    font-size: 10px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 8px;
-  }
-
-  .insight-text {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.6;
-  }
-
-  .insight-text strong {
-    color: var(--text);
-    font-weight: 400;
-  }
-
-  /* LOW COST SUGGESTIONS */
-  .suggestions {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(201, 169, 110, 0.1);
-  }
-
-  .suggestions-title {
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-
-  .suggestion-tag {
-    display: inline-block;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 10px;
-    font-size: 11px;
-    color: var(--text-dim);
-    margin: 3px 3px 3px 0;
-  }
-
-  /* SUBMIT BUTTON */
-  .submit-btn {
-    width: 100%;
-    padding: 14px;
-    background: var(--accent);
-    color: var(--bg);
-    border: none;
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    margin-top: 28px;
-  }
-
-  .submit-btn:hover { opacity: 0.88; }
-  .submit-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-  /* HISTORY VIEW */
-  #history-view { display: none; }
-
-  .history-day {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px 20px;
-    margin-bottom: 12px;
-    animation: fadeUp 0.3s ease both;
-  }
-
-  .history-day-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-    cursor: pointer;
-  }
-
-  .history-day-date {
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-  }
-
-  .history-day-avg {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
-    color: var(--accent);
-  }
-
-  .history-bars {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 6px;
-  }
-
-  .history-bar-item {
-    text-align: center;
-  }
-
-  .history-bar-label {
-    font-size: 9px;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .history-bar-track {
-    height: 40px;
-    background: var(--surface2);
-    border-radius: 3px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .history-bar-fill {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--accent);
-    border-radius: 3px;
-    transition: height 0.4s ease;
-  }
-
-  .history-bar-fill.low { background: var(--warn); }
-
-  /* WELLBEING RING */
-  .wellbeing-ring {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 24px;
-    animation: fadeUp 0.4s ease both;
-  }
-
-  .ring-svg { flex-shrink: 0; }
-
-  .ring-text h3 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    font-weight: 300;
-    color: var(--text);
-  }
-
-  .ring-text p {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-top: 3px;
-  }
-
-  /* COMPLETE STATE */
-  .complete-state {
-    text-align: center;
-    padding: 40px 20px;
-    animation: fadeUp 0.5s ease both;
-    display: none;
-  }
-
-  .complete-state.visible { display: block; }
-
-  .complete-icon {
-    font-size: 40px;
-    margin-bottom: 16px;
-  }
-
-  .complete-state h2 {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 28px;
-    font-weight: 300;
-    font-style: italic;
-    margin-bottom: 8px;
-  }
-
-  .complete-state p {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.6;
-    max-width: 400px;
-    margin: 0 auto 20px;
-  }
-
-  .view-history-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    transition: all 0.2s;
-  }
-  .view-history-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-  /* ANIMATIONS */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* OTHER SIGNAL INPUT */
-  .other-signal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px;
-    margin-top: 8px;
-    grid-column: 1 / -1;
-  }
-
-  .other-signal-label {
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-
-  .other-signal-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-  }
-
-  .other-signal input {
-    flex: 1;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 12px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .other-signal input::placeholder { color: var(--text-muted); }
-  .other-signal input:focus { border-color: rgba(201, 169, 110, 0.4); }
-
-  .other-signal-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 14px;
-    color: var(--text-dim);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-
-  .other-signal-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .other-signal-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-  .other-signal-result {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-    display: none;
-  }
-
-  .other-signal-result.visible { display: block; }
-
-  .ai-thinking {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-muted);
-    font-size: 12px;
-  }
-
-  .ai-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  .ai-dot:nth-child(2) { animation-delay: 0.2s; }
-  .ai-dot:nth-child(3) { animation-delay: 0.4s; }
-
-  @keyframes pulse {
-    0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
-    40% { opacity: 1; transform: scale(1); }
-  }
-
-  .other-signal-insight {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.6;
-  }
-
-  .other-signal-insight strong { color: var(--text); font-weight: 400; }
-
-  /* DATE PICKER FOR BACK-FILL */
-  .date-picker-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    animation: fadeUp 0.4s ease both;
-  }
-
-  .date-picker-bar label {
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    flex-shrink: 0;
-  }
-
-  .date-picker-bar input[type="date"] {
-    flex: 1;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 7px 10px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    outline: none;
-    cursor: pointer;
-    color-scheme: dark;
-  }
-
-  .date-picker-bar input[type="date"]:focus {
-    border-color: rgba(201,169,110,0.4);
-  }
-
-  .date-indicator {
-    font-size: 11px;
-    color: var(--accent);
-    flex-shrink: 0;
-    letter-spacing: 0.05em;
-  }
-
-  /* HISTORY SUB-TABS */
-  .history-subtabs {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 20px;
-    background: var(--surface);
-    border-radius: 8px;
-    padding: 3px;
-  }
-
-  .history-subtab {
-    flex: 1;
-    padding: 7px 4px;
-    text-align: center;
-    font-size: 11px;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    border-radius: 5px;
-    color: var(--text-muted);
-    transition: all 0.2s;
-    border: none;
-    background: none;
-  }
-
-  .history-subtab.active {
-    background: var(--surface2);
-    color: var(--text);
-  }
-
-  /* PERIOD SELECTOR */
-  .period-selector {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-
-  .period-btn {
-    padding: 6px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: none;
-    color: var(--text-muted);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.05em;
-  }
-
-  .period-btn.active {
-    background: var(--accent-soft);
-    border-color: rgba(201,169,110,0.4);
-    color: var(--accent);
-  }
-
-  /* PROGRESSION CHART */
-  .progression-view { display: none; }
-  .progression-view.visible { display: block; }
-  .log-view { display: block; }
-  .log-view.hidden { display: none; }
-
-  .need-progress-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 18px;
-    margin-bottom: 10px;
-    animation: fadeUp 0.3s ease both;
-  }
-
-  .need-progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-
-  .need-progress-name {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 16px;
-    color: var(--text);
-  }
-
-  .need-progress-stats {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-  }
-
-  .need-avg {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
-    color: var(--accent);
-  }
-
-  .need-avg.low { color: var(--warn); }
-
-  .need-trend {
-    font-size: 11px;
-    padding: 2px 7px;
-    border-radius: 10px;
-  }
-
-  .need-trend.up { color: var(--good); background: var(--good-soft); }
-  .need-trend.down { color: var(--warn); background: var(--warn-soft); }
-  .need-trend.flat { color: var(--text-muted); background: var(--surface2); }
-
-  /* SPARKLINE */
-  .sparkline-wrap {
-    width: 100%;
-    height: 36px;
-    position: relative;
-  }
-
-  .sparkline-wrap svg {
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-  }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+:root {
+  --bg: #0e0e0e; --surface: #161616; --surface2: #1e1e1e;
+  --border: #2a2a2a; --text: #e8e4dc; --text-dim: #7a7570;
+  --text-muted: #444; --accent: #c9a96e; --accent-soft: rgba(201,169,110,0.12);
+  --warn: #e07070; --warn-soft: rgba(224,112,112,0.1);
+  --good: #7cad8e; --good-soft: rgba(124,173,142,0.1);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; font-size: 14px; }
+body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); pointer-events: none; z-index: 0; opacity: 0.4; }
+.app { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 32px 20px calc(80px + env(safe-area-inset-bottom)); padding-top: max(32px, env(safe-area-inset-top)); }
+
+/* HEADER */
+.header { margin-bottom: 32px; animation: fadeUp 0.6s ease both; }
+.header-date { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+.header h1 { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; font-style: italic; line-height: 1.1; }
+.header-sub { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+/* TABS */
+.tabs { display: flex; gap: 2px; margin-bottom: 28px; background: var(--surface); border-radius: 8px; padding: 3px; animation: fadeUp 0.5s 0.1s ease both; }
+.tab { flex: 1; padding: 8px 4px; text-align: center; font-size: 11px; letter-spacing: 0.05em; cursor: pointer; border-radius: 6px; color: var(--text-muted); transition: all 0.2s; border: none; background: none; }
+.tab.active { background: var(--surface2); color: var(--text); }
+
+/* SUBTABS */
+.subtabs { display: flex; gap: 2px; margin-bottom: 18px; background: var(--surface); border-radius: 8px; padding: 3px; }
+.subtab { flex: 1; padding: 7px 4px; text-align: center; font-size: 11px; cursor: pointer; border-radius: 5px; color: var(--text-muted); transition: all 0.2s; border: none; background: none; }
+.subtab.active { background: var(--surface2); color: var(--text); }
+
+/* CARDS & SECTIONS */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 10px; transition: border-color 0.2s; }
+.section-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; padding-left: 2px; }
+
+/* DATE PICKER BAR */
+.date-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 16px; }
+.date-bar label { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); flex-shrink: 0; }
+.date-bar input[type="date"] { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; color-scheme: dark; }
+.date-bar input[type="date"]:focus { border-color: rgba(201,169,110,0.4); }
+.date-indicator { font-size: 11px; color: var(--accent); flex-shrink: 0; }
+
+/* SIGNAL GRID */
+.signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.signal-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 11px 13px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 10px; }
+.signal-item:hover { border-color: rgba(224,112,112,0.3); }
+.signal-item.active { background: var(--warn-soft); border-color: rgba(224,112,112,0.35); }
+.signal-check { width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.signal-item.active .signal-check { background: var(--warn); border-color: var(--warn); }
+.signal-check svg { display: none; }
+.signal-item.active .signal-check svg { display: block; }
+.signal-label { font-size: 11px; color: var(--text-dim); line-height: 1.3; }
+.signal-item.active .signal-label { color: var(--warn); }
+
+/* OTHER SIGNAL */
+.other-signal { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 13px; margin-bottom: 10px; }
+.other-signal-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.other-signal-row { display: flex; gap: 8px; align-items: center; }
+.other-signal input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 11px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; }
+.other-signal input::placeholder { color: var(--text-muted); }
+.other-signal input:focus { border-color: rgba(201,169,110,0.4); }
+.other-signal-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 13px; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; white-space: nowrap; transition: all 0.2s; flex-shrink: 0; }
+.other-signal-btn:hover { border-color: var(--accent); color: var(--accent); }
+.other-signal-result { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: none; }
+.other-signal-result.visible { display: block; }
+.ai-thinking { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 12px; }
+.ai-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+.ai-dot:nth-child(2) { animation-delay: 0.2s; } .ai-dot:nth-child(3) { animation-delay: 0.4s; }
+.other-signal-insight { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+.other-signal-insight strong { color: var(--text); font-weight: 400; }
+
+/* SIGNAL INSIGHT BOX */
+.insight-box { background: var(--accent-soft); border: 1px solid rgba(201,169,110,0.2); border-radius: 10px; padding: 16px 18px; margin-bottom: 10px; display: none; }
+.insight-box.visible { display: block; }
+.insight-title { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.insight-text { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+.insight-text strong { color: var(--text); font-weight: 400; }
+.signal-banner { background: var(--warn-soft); border: 1px solid rgba(224,112,112,0.2); border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; display: none; }
+.signal-banner.visible { display: block; }
+.signal-banner-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--warn); margin-bottom: 6px; }
+.signal-banner p { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+/* NEED CARD */
+.need-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 15px 17px; margin-bottom: 8px; transition: border-color 0.2s, background 0.2s; }
+.need-card.rated { border-color: rgba(201,169,110,0.2); background: rgba(201,169,110,0.03); }
+.need-card.low-rated { border-color: rgba(224,112,112,0.2); background: rgba(224,112,112,0.03); }
+.need-card.signal-highlight { border-color: rgba(224,112,112,0.25); }
+.need-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 11px; }
+.need-name { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 400; color: var(--text); line-height: 1.2; }
+.need-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.need-score-display { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; color: var(--text-muted); min-width: 28px; text-align: right; transition: color 0.3s; }
+.need-score-display.has-value { color: var(--accent); }
+.need-score-display.low { color: var(--warn); }
+.rating { display: flex; gap: 7px; align-items: center; }
+.rating-dot { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-muted); transition: all 0.15s; background: none; }
+.rating-dot:hover { border-color: var(--accent); color: var(--accent); }
+.rating-dot.selected { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 500; }
+.rating-dot.low.selected { background: var(--warn); border-color: var(--warn); }
+.suggestions { margin-top: 11px; padding-top: 11px; border-top: 1px solid rgba(201,169,110,0.1); }
+.suggestions-title { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; }
+.suggestion-tag { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 11px; color: var(--text-dim); margin: 3px 3px 3px 0; }
+
+/* BUTTONS */
+.btn-primary { width: 100%; padding: 13px; background: var(--accent); color: var(--bg); border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 0.05em; cursor: pointer; transition: opacity 0.2s; margin-top: 24px; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 9px 18px; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 12px; transition: all 0.2s; }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-small { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+.btn-small:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: none; border: 1px solid rgba(224,112,112,0.3); border-radius: 6px; padding: 5px 10px; color: var(--warn); font-family: 'DM Sans', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+.btn-danger:hover { background: var(--warn-soft); }
+
+/* COMPLETE STATE */
+.complete-state { text-align: center; padding: 36px 20px; animation: fadeUp 0.5s ease both; display: none; }
+.complete-state.visible { display: block; }
+.complete-icon { font-size: 36px; margin-bottom: 14px; }
+.complete-state h2 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; font-style: italic; margin-bottom: 8px; }
+.complete-state p { font-size: 13px; color: var(--text-dim); line-height: 1.6; max-width: 400px; margin: 0 auto 16px; }
+.complete-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* CALENDAR */
+.calendar-wrap { margin-bottom: 20px; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-month { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-weight: 300; }
+.cal-nav { background: none; border: 1px solid var(--border); color: var(--text-dim); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.cal-nav:hover { border-color: var(--accent); color: var(--accent); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.cal-day-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); text-align: center; padding: 4px 0; }
+.cal-cell { aspect-ratio: 1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: all 0.15s; color: var(--text-muted); border: 1px solid transparent; }
+.cal-cell.empty { cursor: default; }
+.cal-cell.has-entry { background: rgba(201,169,110,0.15); color: var(--accent); border-color: rgba(201,169,110,0.2); }
+.cal-cell.today { border-color: var(--accent); color: var(--accent); }
+.cal-cell.selected { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.cal-cell.has-entry.selected { background: var(--accent); color: var(--bg); }
+.cal-cell:not(.empty):hover { border-color: var(--accent); }
+.cal-cell.future { opacity: 0.2; cursor: default; pointer-events: none; }
+
+/* HISTORY LOG */
+.history-day { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; animation: fadeUp 0.3s ease both; }
+.history-day-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 18px; cursor: pointer; }
+.history-day-header:hover { background: rgba(255,255,255,0.02); }
+.history-day-left { flex: 1; }
+.history-day-date { font-size: 12px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; margin-bottom: 3px; }
+.history-day-needs { font-size: 11px; color: var(--warn); line-height: 1.4; }
+.history-day-right { display: flex; align-items: center; gap: 10px; }
+.history-day-avg { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--accent); }
+.history-day-chevron { color: var(--text-muted); font-size: 12px; transition: transform 0.2s; }
+.history-day-chevron.open { transform: rotate(180deg); }
+.history-day-detail { padding: 0 18px 16px; display: none; border-top: 1px solid var(--border); }
+.history-day-detail.open { display: block; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 12px; }
+.detail-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+.detail-name { font-size: 12px; color: var(--text-dim); }
+.detail-score { font-family: 'Cormorant Garamond', serif; font-size: 16px; }
+.detail-score.low { color: var(--warn); }
+.detail-score.ok { color: var(--accent); }
+.history-day-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+/* WELLBEING RING */
+.wellbeing-ring { display: flex; align-items: center; gap: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 20px; }
+.ring-text h3 { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 300; }
+.ring-text p { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+
+/* PERIOD SELECTOR */
+.period-selector { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+.period-btn { padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.2s; }
+.period-btn.active { background: var(--accent-soft); border-color: rgba(201,169,110,0.4); color: var(--accent); }
+
+/* PROGRESSION */
+.sort-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.sort-bar span { font-size: 11px; color: var(--text-muted); }
+.sort-btn { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text-muted); cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+.sort-btn.active { background: var(--accent-soft); border-color: rgba(201,169,110,0.3); color: var(--accent); }
+.need-progress-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 15px 17px; margin-bottom: 8px; animation: fadeUp 0.3s ease both; }
+.need-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.need-progress-name { font-family: 'Cormorant Garamond', serif; font-size: 16px; color: var(--text); }
+.need-progress-stats { display: flex; gap: 10px; align-items: center; }
+.need-avg { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--accent); }
+.need-avg.low { color: var(--warn); }
+.need-trend { font-size: 11px; padding: 2px 7px; border-radius: 10px; }
+.need-trend.up { color: var(--good); background: var(--good-soft); }
+.need-trend.down { color: var(--warn); background: var(--warn-soft); }
+.need-trend.flat { color: var(--text-muted); background: var(--surface2); }
+.sparkline-wrap { width: 100%; height: 36px; }
+.sparkline-wrap svg { width: 100%; height: 100%; overflow: visible; }
+.compound-graph { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.compound-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+.compound-svg-wrap { width: 100%; height: 120px; }
+
+/* TODO LIST */
+.todo-need-filter { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+.need-chip { padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+.need-chip.active { background: var(--accent-soft); border-color: rgba(201,169,110,0.4); color: var(--accent); }
+.need-chip.warn { background: var(--warn-soft); border-color: rgba(224,112,112,0.3); color: var(--warn); }
+.todo-add { display: flex; gap: 8px; margin-bottom: 16px; }
+.todo-add input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none; }
+.todo-add input::placeholder { color: var(--text-muted); }
+.todo-add input:focus { border-color: rgba(201,169,110,0.4); }
+.todo-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 8px; cursor: grab; transition: all 0.15s; user-select: none; }
+.todo-item:active { cursor: grabbing; }
+.todo-item.dragging { opacity: 0.4; }
+.todo-item.drag-over { border-color: var(--accent); }
+.todo-item.done .todo-text { text-decoration: line-through; color: var(--text-muted); }
+.todo-top { display: flex; align-items: flex-start; gap: 10px; }
+.todo-drag { color: var(--text-muted); font-size: 14px; padding-top: 1px; flex-shrink: 0; cursor: grab; }
+.todo-check { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; margin-top: 1px; }
+.todo-item.done .todo-check { background: var(--good); border-color: var(--good); }
+.todo-check-inner { width: 8px; height: 8px; border-radius: 50%; background: var(--good); opacity: 0; transition: opacity 0.15s; }
+.todo-item.done .todo-check-inner { opacity: 1; }
+.todo-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; word-break: break-word; }
+.todo-delete { color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 0 2px; flex-shrink: 0; transition: color 0.15s; }
+.todo-delete:hover { color: var(--warn); }
+.todo-needs-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 9px; margin-left: 28px; }
+.todo-need-tag { font-size: 10px; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); color: var(--text-muted); background: var(--surface2); cursor: pointer; transition: all 0.15s; }
+.todo-need-tag.assigned { border-color: rgba(201,169,110,0.3); color: var(--accent); background: var(--accent-soft); }
+.todo-need-tag.low-need { border-color: rgba(224,112,112,0.3); color: var(--warn); background: var(--warn-soft); }
+.needs-coverage { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 15px 17px; margin-bottom: 16px; }
+.coverage-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+.coverage-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+.coverage-chip { font-size: 11px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); color: var(--text-muted); }
+.coverage-chip.covered { border-color: rgba(201,169,110,0.3); color: var(--accent); background: var(--accent-soft); }
+.coverage-chip.uncovered { border-color: rgba(224,112,112,0.3); color: var(--warn); background: var(--warn-soft); }
+
+/* BACKUP */
+.backup-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
+.backup-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+.backup-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* VIEWS */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ANIMATIONS */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -825,16 +260,17 @@
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="showView('checkin')">Today</button>
-    <button class="tab" onclick="showView('history')">History</button>
+    <button class="tab active" onclick="showTab('checkin')">Check-in</button>
+    <button class="tab" onclick="showTab('history')">History</button>
+    <button class="tab" onclick="showTab('todo')">To-do</button>
+    <button class="tab" onclick="showTab('settings')">Settings</button>
   </div>
 
-  <!-- CHECK-IN VIEW -->
-  <div id="checkin-view">
+  <!-- CHECK-IN TAB -->
+  <div class="view active" id="tab-checkin">
 
-    <!-- DATE PICKER -->
-    <div class="date-picker-bar">
-      <label>Filling in for</label>
+    <div class="date-bar">
+      <label>Date</label>
       <input type="date" id="checkin-date" onchange="onDateChange()"/>
       <span class="date-indicator" id="date-indicator">Today</span>
     </div>
@@ -844,65 +280,53 @@
       <p id="signal-banner-text"></p>
     </div>
 
-    <!-- ALREADY DONE TODAY -->
     <div class="complete-state" id="complete-state">
       <div class="complete-icon">✦</div>
-      <h2>Check-in complete</h2>
+      <h2 id="complete-title">Check-in complete</h2>
       <p id="complete-summary"></p>
-      <button class="view-history-btn" onclick="showView('history')">View your history</button>
+      <div class="complete-actions">
+        <button class="btn-ghost" onclick="showTab('history')">View history</button>
+        <button class="btn-ghost" onclick="editCurrentEntry()">Edit this entry</button>
+      </div>
     </div>
 
-    <!-- FORM -->
     <div id="checkin-form">
-
-      <!-- SIGNAL BEHAVIOURS -->
-      <div class="section" style="animation-delay: 0.05s">
-        <div class="section-title">Signal behaviours today</div>
-        <div class="signal-grid" id="signal-grid"></div>
-
-        <!-- OTHER SIGNAL -->
-        <div class="other-signal">
-          <div class="other-signal-label">Something else?</div>
-          <div class="other-signal-row">
-            <input type="text" id="other-signal-input" placeholder="e.g. I've been snapping at people, I can't focus…" maxlength="200" onkeydown="if(event.key==='Enter') interpretOtherSignal()"/>
-            <button class="other-signal-btn" id="other-signal-btn" onclick="interpretOtherSignal()">Reflect ✦</button>
-          </div>
-          <div class="other-signal-result" id="other-signal-result">
-            <div class="ai-thinking" id="ai-thinking">
-              <div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div>
-              <span>Reading your signal…</span>
-            </div>
-            <div class="other-signal-insight" id="other-signal-insight"></div>
-          </div>
+      <div class="section-label" style="margin-bottom:10px">Signal behaviours today</div>
+      <div class="signal-grid" id="signal-grid"></div>
+      <div class="other-signal">
+        <div class="other-signal-label">Something else?</div>
+        <div class="other-signal-row">
+          <input type="text" id="other-signal-input" placeholder="e.g. I've been snapping at people, I can't focus…" maxlength="200" onkeydown="if(event.key==='Enter') interpretOtherSignal()"/>
+          <button class="other-signal-btn" onclick="interpretOtherSignal()">Reflect ✦</button>
         </div>
-        <div class="insight-box" id="signal-insight">
-          <div class="insight-title">What your signals might be saying</div>
-          <div class="insight-text" id="signal-insight-text"></div>
+        <div class="other-signal-result" id="other-signal-result">
+          <div class="ai-thinking" id="ai-thinking">
+            <div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div>
+            <span>Reading your signal…</span>
+          </div>
+          <div class="other-signal-insight" id="other-signal-insight"></div>
         </div>
       </div>
-
-      <!-- NEEDS -->
-      <div class="section" style="animation-delay: 0.1s">
-        <div class="section-title">Rate each need today · 1 = unmet · 5 = well tended</div>
-        <div id="needs-list"></div>
+      <div class="insight-box" id="signal-insight">
+        <div class="insight-title">What your signals might be saying</div>
+        <div class="insight-text" id="signal-insight-text"></div>
       </div>
 
-      <button class="submit-btn" id="submit-btn" onclick="submitCheckin()">Save today's check-in</button>
+      <div class="section-label" style="margin: 20px 0 10px">Rate each need · 1 = unmet · 5 = well tended</div>
+      <div id="needs-list"></div>
 
+      <button class="btn-primary" id="submit-btn" onclick="submitCheckin()">Save check-in</button>
     </div>
   </div>
 
-  <!-- HISTORY VIEW -->
-  <div id="history-view">
-    <div class="wellbeing-ring" id="wellbeing-ring">
-      <svg class="ring-svg" width="72" height="72" viewBox="0 0 72 72">
-        <circle cx="36" cy="36" r="28" fill="none" stroke="#2a2a2a" stroke-width="6"/>
-        <circle cx="36" cy="36" r="28" fill="none" stroke="#c9a96e" stroke-width="6"
-          stroke-dasharray="175.9"
-          stroke-dashoffset="175.9"
-          stroke-linecap="round"
-          transform="rotate(-90 36 36)"
-          id="ring-progress"/>
+  <!-- HISTORY TAB -->
+  <div class="view" id="tab-history">
+    <div class="wellbeing-ring">
+      <svg width="64" height="64" viewBox="0 0 64 64" style="flex-shrink:0">
+        <circle cx="32" cy="32" r="24" fill="none" stroke="#2a2a2a" stroke-width="5"/>
+        <circle cx="32" cy="32" r="24" fill="none" stroke="#c9a96e" stroke-width="5"
+          stroke-dasharray="150.8" stroke-dashoffset="150.8"
+          stroke-linecap="round" transform="rotate(-90 32 32)" id="ring-progress"/>
       </svg>
       <div class="ring-text">
         <h3 id="ring-label">No data yet</h3>
@@ -910,36 +334,77 @@
       </div>
     </div>
 
-    <!-- SUB-TABS -->
-    <div class="history-subtabs">
-      <button class="history-subtab active" onclick="showHistoryTab('log')">Daily log</button>
-      <button class="history-subtab" onclick="showHistoryTab('progression')">Progression</button>
+    <div class="subtabs">
+      <button class="subtab active" onclick="showHistoryTab('log')">Daily log</button>
+      <button class="subtab" onclick="showHistoryTab('calendar')">Calendar</button>
+      <button class="subtab" onclick="showHistoryTab('progression')">Progression</button>
     </div>
 
-    <!-- LOG VIEW -->
-    <div class="log-view" id="log-view">
+    <div id="history-log-view">
       <div id="history-list"></div>
     </div>
 
-    <!-- PROGRESSION VIEW -->
-    <div class="progression-view" id="progression-view">
+    <div id="history-calendar-view" style="display:none">
+      <div class="calendar-wrap" id="calendar-wrap"></div>
+    </div>
+
+    <div id="history-progression-view" style="display:none">
       <div class="period-selector">
-        <button class="period-btn active" onclick="setPeriod(7, this)">Week</button>
-        <button class="period-btn" onclick="setPeriod(30, this)">Month</button>
-        <button class="period-btn" onclick="setPeriod(365, this)">Year</button>
-        <button class="period-btn" onclick="setPeriod(730, this)">2 Years</button>
+        <button class="period-btn active" onclick="setPeriod(7,this)">Week</button>
+        <button class="period-btn" onclick="setPeriod(30,this)">Month</button>
+        <button class="period-btn" onclick="setPeriod(365,this)">Year</button>
+        <button class="period-btn" onclick="setPeriod(730,this)">2 Years</button>
       </div>
+      <div class="sort-bar">
+        <span>Sort:</span>
+        <button class="sort-btn active" id="sort-default" onclick="setSort('default',this)">Default</button>
+        <button class="sort-btn" id="sort-asc" onclick="setSort('asc',this)">Lowest first</button>
+        <button class="sort-btn" id="sort-desc" onclick="setSort('desc',this)">Highest first</button>
+      </div>
+      <div class="compound-graph" id="compound-graph"></div>
       <div id="progression-list"></div>
+    </div>
+  </div>
+
+  <!-- TODO TAB -->
+  <div class="view" id="tab-todo">
+    <div class="needs-coverage" id="needs-coverage"></div>
+    <div class="todo-add">
+      <input type="text" id="todo-input" placeholder="Add a task…" maxlength="200" onkeydown="if(event.key==='Enter') addTodo()"/>
+      <button class="btn-ghost" onclick="addTodo()">Add</button>
+    </div>
+    <div id="todo-list"></div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="view" id="tab-settings">
+    <div class="backup-section">
+      <div class="backup-title">Backup & Restore</div>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;line-height:1.5">Export your data as a JSON file and save it to iCloud, Google Drive, or anywhere you like. Import to restore.</p>
+      <div class="backup-actions">
+        <button class="btn-ghost" onclick="exportData()">⬇ Export data</button>
+        <button class="btn-ghost" onclick="document.getElementById('import-file').click()">⬆ Import data</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)"/>
+      </div>
+    </div>
+    <div class="backup-section">
+      <div class="backup-title">About</div>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.5">Wholeness Tracker · your data stays on your device. Nothing is sent anywhere except the Reflect feature, which uses a local keyword matcher and requires no internet connection.</p>
     </div>
   </div>
 
 </div>
 
 <script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
 const NEEDS = [
   { id: 'delight', name: 'Delight', desc: 'Pleasure, beauty, sensory joy', suggestions: ['Free museum or gallery visit', 'Walk a route you\'ve never taken', 'Cook something you genuinely love', 'Watch the sunset or sunrise', 'Browse a market or car boot sale', 'Make yourself a beautiful meal at home', 'Find a new spot in a park and sit in it', 'Listen to an album all the way through', 'Light a candle and do nothing else', 'Forage for something interesting on a walk'] },
-  { id: 'intellectual', name: 'Intellectual & Emotional Nourishment', desc: 'Reading, learning, stimulation', suggestions: ['Visit your local library', 'Listen to a podcast on a walk', 'Watch a free lecture or documentary', 'Read a chapter of something challenging', 'Look something up you\'ve always wondered about', 'Find a new essay or long-read online', 'Watch an art-house or classic film', 'Follow a curiosity down a Wikipedia rabbit hole', 'Listen to a philosophy or ideas podcast', 'Browse the free section of a bookshop'] },
-  { id: 'satiety', name: 'Satiety & Comfort', desc: 'Having enough, living decently', suggestions: ['Meal prep something hearty and comforting', 'Tidy and reset one space in your home', 'Cook a slow, intentional meal', 'Make sure you\'ve eaten properly today', 'Batch cook to ease the week ahead', 'Sort one domestic thing that\'s been nagging you', 'Make your bed and change the sheets', 'Buy one small thing that makes life better', 'Brew a proper cup of tea or coffee', 'Create a cosy corner for yourself at home'] },
+  { id: 'intellectual', name: 'Intellectual Nourishment', desc: 'Reading, learning, ideas, stimulation', suggestions: ['Visit your local library', 'Listen to a podcast on a walk', 'Watch a free lecture or documentary', 'Read a chapter of something challenging', 'Look something up you\'ve always wondered about', 'Find a new essay or long-read online', 'Watch an art-house or classic film', 'Follow a curiosity down a Wikipedia rabbit hole', 'Listen to a philosophy or ideas podcast', 'Browse the free section of a bookshop'] },
+  { id: 'emotional', name: 'Emotional Nourishment', desc: 'Feeling met, moved, held, in touch with feeling', suggestions: ['Talk to someone who truly listens', 'Journal what you\'re actually feeling', 'Watch or read something that moves you', 'Allow yourself to feel something without fixing it', 'Spend time with someone warm and present', 'Write a letter you may not send', 'Listen to music that meets your mood', 'Let yourself cry if it\'s there', 'Read poetry that speaks to where you are', 'Sit with a feeling long enough to name it'] },
+  { id: 'knowledge', name: 'Resources, Knowledge & Skill', desc: 'Building capability, tools, and know-how', suggestions: ['Spend 30 mins on a skill you\'re developing', 'Watch a tutorial or take a free online course', 'Read about a topic relevant to your work or craft', 'Practice something deliberately', 'Find a free resource in your field', 'Organise your notes or reference materials', 'Teach something you know to someone else', 'Identify one skill gap and research how to close it', 'Work on your tarot deck project', 'Find a mentor or model for something you want to learn'] },
+  { id: 'satiety', name: 'Satiety', desc: 'Having enough to eat, basic needs met', suggestions: ['Make sure you\'ve eaten properly today', 'Meal prep to ease the week ahead', 'Cook a slow, intentional meal', 'Batch cook something hearty', 'Eat at regular times today', 'Make something nourishing from scratch', 'Buy good food rather than convenient food', 'Eat somewhere nice without rushing', 'Pay attention to hunger and fullness', 'Stock the kitchen so you always have something good'] },
+  { id: 'comfort', name: 'Comfort, Home Making & Ease', desc: 'A home that holds you, ease in daily life', suggestions: ['Tidy and reset one space in your home', 'Buy one small thing that makes your space nicer', 'Make your bed and change the sheets', 'Create a cosy corner for yourself', 'Tend to a plant or something living at home', 'Sort one domestic thing that\'s been nagging you', 'Brew a proper cup of tea or coffee and actually enjoy it', 'Light candles or create atmosphere at home', 'Do something towards making your flat more yours', 'Fix or clean something you\'ve been ignoring'] },
   { id: 'expression', name: 'Expression', desc: 'Sharing, making, journalling, dancing', suggestions: ['Journal freely for 10 minutes', 'Send a voice note to someone', 'Sketch, doodle, or draw without aim', 'Dance alone in your room', 'Work on your tarot deck project', 'Write a poem or a fragment of one', 'Take photos of something that moves you', 'Record yourself talking through something', 'Write a letter you may or may not send', 'Make something with your hands'] },
   { id: 'connection', name: 'Connection', desc: 'Meaningful, mutual interaction', suggestions: ['Text or call someone you genuinely like', 'Arrange a walk or coffee with a friend', 'Write a proper message to someone you miss', 'Say yes to an invitation you\'d normally skip', 'Have a real conversation with a colleague', 'Join a group activity or class', 'Reach out to someone you haven\'t spoken to in a while', 'Invite someone to do something simple together', 'Spend time with someone who energises you', 'Go somewhere sociable even briefly'] },
   { id: 'being-known', name: 'Being Known', desc: 'Felt sense of being truly seen', suggestions: ['Share something real and unfiltered with someone you trust', 'Write what you\'d want someone to truly understand about you', 'Bring something personal to therapy or journalling', 'Tell a friend how you\'re actually doing', 'Let someone in on something you usually keep private', 'Write about who you are right now', 'Ask for and receive a honest reflection from someone close', 'Read something that makes you feel less alone', 'Let yourself be seen without performing', 'Write a letter to yourself from someone who truly knows you'] },
@@ -950,7 +415,7 @@ const NEEDS = [
   { id: 'growth', name: 'Growth', desc: 'Learning, building, becoming', suggestions: ['Spend 30 mins on a skill you\'re developing', 'Take one small step on a longer project', 'Read something that stretches you', 'Watch a tutorial or take a free online class', 'Reflect on what you\'ve learned recently', 'Work on your tarot deck or an art project', 'Try something you\'ve never done before', 'Set one concrete intention for the week', 'Find a mentor, teacher or guide', 'Write about where you want to be in a year'] },
   { id: 'planning', name: 'Planning', desc: 'Future-orientated thinking', suggestions: ['Write tomorrow\'s intentions tonight', 'Review one goal and your progress', 'Organise one area of your life', 'Make a simple weekly plan', 'Identify one thing to move forward on', 'Review your saving pots and budget', 'Research something you want to do or achieve', 'Write a list of what matters most right now', 'Map out the next step on a longer goal', 'Create a simple routine or rhythm to try'] },
   { id: 'play', name: 'Play', desc: 'Spontaneous, purposeless fun', suggestions: ['Watch something genuinely silly', 'Make someone laugh', 'Play a board game or card game', 'Do a pub quiz or quiz night', 'Mess around with an instrument or voice', 'Do accents or characters just for yourself', 'Play a video game with no goal', 'Make something absurd and pointless', 'Improvise a game with whoever\'s around', 'Do something childlike without self-consciousness'] },
-  { id: 'autonomy', name: 'Autonomy & Self-Realisation', desc: 'Acting in alignment with your values', suggestions: ['Make one choice purely for yourself today', 'Say no to something that drains you', 'Do one thing you\'ve been putting off for yourself', 'Spend time doing exactly what you want', 'Protect time that\'s yours alone', 'Identify one area where you\'re not honouring your values', 'Make a decision without asking for external approval', 'Do something that expresses who you are', 'Reclaim time from something obligatory', 'Act on an instinct you\'d usually second-guess'] },
+  { id: 'autonomy', name: 'Freedom, Autonomy & Self-Realisation', desc: 'Acting freely, in alignment with your values', suggestions: ['Make one choice purely for yourself today', 'Say no to something that drains you', 'Do one thing you\'ve been putting off for yourself', 'Spend time doing exactly what you want', 'Protect time that\'s yours alone', 'Identify one area where you\'re not honouring your values', 'Make a decision without asking for external approval', 'Do something that expresses who you are', 'Reclaim time from something obligatory', 'Act on an instinct you\'d usually second-guess'] },
   { id: 'stability', name: 'Stability & Consistency', desc: 'Steady rhythms and routines', suggestions: ['Keep one habit you\'ve been building', 'Eat at regular times today', 'Establish or maintain a morning ritual', 'Go to bed at a consistent time', 'Keep one commitment you made to yourself', 'Create a small reliable anchor in your day', 'Do the same thing at the same time as yesterday', 'Limit decision fatigue by simplifying one choice', 'Return to a routine after a disruption', 'Write down the rhythms that help you feel grounded'] },
   { id: 'security', name: 'Security', desc: 'Financial and life safety net', suggestions: ['Review your budget or saving pots', 'Look into one free resource or benefit available to you', 'Tend to one piece of financial admin', 'Check your outgoings and cancel one unused subscription', 'Set a small savings goal and action it', 'Research one way to increase your financial resilience', 'Make sure your emergency basics are in place', 'Organise an important document or record', 'Learn about one financial tool or concept', 'Talk to someone knowledgeable about a financial question'] },
   { id: 'solitude', name: 'Solitude', desc: 'Time alone, in your own space', suggestions: ['Spend an hour with no input at all', 'Take a slow solo walk', 'Sit with a tea and no phone', 'Spend time in your own space intentionally', 'Do one thing entirely alone that you enjoy', 'Let yourself be bored for a little while', 'Sit in a café alone and watch the world', 'Go to a gallery, museum or park by yourself', 'Take yourself out to eat alone', 'Spend an evening in that is genuinely yours'] },
@@ -958,390 +423,436 @@ const NEEDS = [
   { id: 'meaning', name: 'Meaning-Making', desc: 'Art, thought, research, spiritual inquiry', suggestions: ['Read philosophy, poetry, or something that makes you think', 'Visit a church, sacred space, or somewhere quietly powerful', 'Sit with a question and let it stay open', 'Work on your tarot project with intention', 'Write about what matters to you and why', 'Find a piece of art that moves you', 'Watch a film that poses a real question', 'Read about a spiritual or philosophical tradition', 'Spend time in nature with no agenda', 'Write about your values and what you\'re living for'] },
   { id: 'body', name: 'Body & Sensory Aliveness', desc: 'Movement, sensation, physical presence', suggestions: ['Dance alone to 3 songs you love', 'Go for a run, cycle, or long walk', 'Take a long shower and be present in it', 'Do a yoga or stretching session', 'Wear something that makes you feel good', 'Cook with attention to smell, texture, and taste', 'Get a massage or give yourself one', 'Put on a scent that grounds you', 'Swim, if possible', 'Move your body in any way that feels good today'] },
   { id: 'transcendence', name: 'Transcendence', desc: 'A felt sense of something larger than yourself', suggestions: ['Spend unhurried time in nature', 'Meditate or sit in silence', 'Read or watch something awe-inspiring', 'Attend a service, ceremony, or ritual', 'Stand somewhere with a wide view', 'Look at the night sky', 'Read about the cosmos, deep time, or deep ecology', 'Visit somewhere historically or spiritually significant', 'Practise gratitude for what exists', 'Let yourself be moved by music, art, or beauty'] },
+  { id: 'homemaking', name: 'Home Making', desc: 'Building a home that feels yours', suggestions: ['Add one personal touch to your space', 'Frame or display something meaningful', 'Buy a plant or something living for your flat', 'Sort one area you\'ve been avoiding', 'Invest time in making one room feel more settled', 'Cook and eat at home deliberately', 'Create a small ritual that anchors you to your space', 'Tidy as an act of self-respect not obligation', 'Invite someone over — inhabit your space fully', 'Walk around your neighbourhood as if it\'s yours'] },
 ];
 
 const SIGNALS = [
-  { id: 'casual-sex', label: 'Seeking numbing or escapist stimulation', needs: ['connection', 'being-known', 'body', 'solitude'] },
+  { id: 'numbing', label: 'Seeking numbing or escapist stimulation', needs: ['connection', 'being-known', 'body', 'solitude'] },
   { id: 'overworking', label: 'Overworking or compulsive busyness', needs: ['rest', 'play', 'solitude', 'autonomy'] },
-  { id: 'no-meaningful-interaction', label: 'No meaningful interaction today', needs: ['connection', 'being-known', 'belonging'] },
+  { id: 'no-interaction', label: 'No meaningful interaction today', needs: ['connection', 'being-known', 'belonging'] },
   { id: 'feeling-down', label: 'Feeling like a failure or just down', needs: ['expression', 'being-known', 'growth', 'meaning'] },
 ];
 
 const SIGNAL_MESSAGES = {
-  'casual-sex': 'Seeking stimulation or escape can sometimes signal unmet needs for <strong>genuine connection</strong>, <strong>being known</strong>, or <strong>physical aliveness</strong>. Worth asking: what am I actually hungry for?',
+  'numbing': 'Seeking stimulation or escape can signal unmet needs for <strong>genuine connection</strong>, <strong>being known</strong>, or <strong>physical aliveness</strong>. Worth asking: what am I actually hungry for?',
   'overworking': 'Compulsive busyness often masks a need for <strong>rest</strong>, <strong>play</strong>, or <strong>solitude</strong>. What are you avoiding by staying busy?',
-  'no-meaningful-interaction': 'A day without real exchange can quietly hollow things out. Your needs for <strong>connection</strong> and <strong>belonging</strong> may be asking for attention.',
+  'no-interaction': 'A day without real exchange can quietly hollow things out. Your needs for <strong>connection</strong> and <strong>belonging</strong> may be asking for attention.',
   'feeling-down': 'Feeling low or like a failure often touches <strong>expression</strong>, <strong>being known</strong>, and <strong>meaning</strong>. What do you need to say, or hear, right now?',
 };
 
+const SIGNAL_RULES = [
+  { keywords: ['snap','irritab','anger','angry','rage','frustrat','agitat','tense','on edge','wound up'], needs: ['rest','solitude','expression','body'], message: 'Irritability and tension often point to an overdue need for <strong>rest</strong> or <strong>solitude</strong>. Your body may also be asking for movement or release. What hasn\'t had space to be expressed today?' },
+  { keywords: ['can\'t focus','distract','scatter','can\'t concentrate','drift','mind wander','zoning out','zone out','spacing out'], needs: ['rest','meaning','intellectual','solitude'], message: 'Difficulty focusing can signal that your mind needs either genuine <strong>rest</strong>, or something more meaningful to engage with. Sometimes scattered attention is a quiet protest against doing something that doesn\'t matter to you.' },
+  { keywords: ['scroll','phone','doom','numb','dissociat','check out','escape','avoid','procrastinat'], needs: ['connection','rest','meaning','expression'], message: 'Numbing or escape behaviours often mask a need for real <strong>connection</strong>, <strong>rest</strong>, or a sense of <strong>meaning</strong>. Worth asking: what feeling is this helping you not feel right now?' },
+  { keywords: ['lonely','alone','isolated','no one','nobody','miss people','invisible','unseen','unnoticed'], needs: ['connection','being-known','belonging'], message: 'What you\'re feeling points clearly to <strong>connection</strong> and <strong>being known</strong>. Loneliness is often less about being around people and more about feeling truly seen. Who in your life might be able to receive you right now?' },
+  { keywords: ['sad','low','down','flat','empty','hollow','numb','blue','grey','hopeless','pointless'], needs: ['meaning','expression','connection','body'], message: 'Feeling flat or low often signals a need for <strong>meaning</strong> and <strong>expression</strong> — something to connect to, and somewhere for what you\'re carrying to go. Even a small act of making or moving can shift this.' },
+  { keywords: ['anxious','anxiety','worried','worry','panic','overwhelm','too much','can\'t cope','spiral'], needs: ['rest','security','stability','solitude'], message: 'Anxiety often surfaces when needs for <strong>security</strong> or <strong>stability</strong> feel threatened, or when there\'s simply been too little <strong>rest</strong> and <strong>solitude</strong>. What would help you feel more grounded right now?' },
+  { keywords: ['restless','can\'t sit still','bored','aimless','purposeless','nothing to do','stuck','stagnant'], needs: ['play','growth','meaning','body'], message: 'Restlessness can be <strong>play</strong> or <strong>growth</strong> asking for attention — a sign that something in you wants to move, create, or explore. What\'s something you haven\'t let yourself do lately just for the sake of it?' },
+  { keywords: ['withdraw','hiding','avoiding people','cancel','bail','shut down','close off'], needs: ['solitude','rest','being-known','expression'], message: 'Withdrawal can mean you genuinely need <strong>solitude</strong> and <strong>rest</strong> — or it can mean you\'re protecting yourself from a fear of not being truly <strong>known</strong>. Both are worth sitting with.' },
+  { keywords: ['failure','fail','not good enough','worthless','useless','behind','inadequate','ashamed','shame'], needs: ['being-known','growth','expression','meaning'], message: 'Feelings of failure often touch a need to be truly <strong>known</strong> — seen in your full complexity, not just your results. They can also signal that your need for <strong>growth</strong> feels blocked or unwitnessed.' },
+  { keywords: ['tired','exhausted','depleted','drained','burnt out','no energy','can\'t be bothered','fatigued'], needs: ['rest','self-care','solitude','body'], message: 'Your body and mind are asking clearly for <strong>rest</strong> and <strong>self-care</strong>. Sometimes depletion is also a sign that too much has been given outward without enough coming back in.' },
+  { keywords: ['busy','overwhelmed','too much','can\'t stop','always working','no time','no space','rushing'], needs: ['rest','autonomy','play','solitude'], message: 'Chronic busyness often crowds out <strong>autonomy</strong> and <strong>play</strong>. It can also be a way of avoiding stillness. What would it feel like to genuinely stop for an hour today?' },
+  { keywords: ['uninspired','uncreative','blocked','flat','no ideas','dry'], needs: ['delight','intellectual','expression','body'], message: 'Creative dryness often follows a deficit of <strong>delight</strong> and <strong>nourishment</strong> — not enough beauty, stimulus, or play coming in. What have you taken in lately that genuinely moved you?' },
+  { keywords: ['miss','nostalgic','homesick','longing','yearn'], needs: ['belonging','connection','being-known','meaning'], message: 'Longing and nostalgia point toward <strong>belonging</strong> and <strong>being known</strong>. What is it specifically that you miss? That often points to what you need now.' },
+  { keywords: ['doubt','uncertain','lost','don\'t know who i am','don\'t know what i want','confused','adrift'], needs: ['meaning','autonomy','solitude','growth'], message: 'Feeling lost or uncertain calls for <strong>solitude</strong> — space to hear what you actually think and want, beneath the noise. Your need for <strong>meaning</strong> may be asking to be taken seriously.' },
+  { keywords: ['guilty','guilt','regret','should have','shouldn\'t have','let down'], needs: ['expression','connection','being-known','meaning'], message: 'Guilt and regret tend to grow in silence. Your needs for <strong>expression</strong> and <strong>connection</strong> may be asking for a conversation, or at least an honest page in your journal.' },
+];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let selectedDate = todayKey();
 let ratings = {};
 let activeSignals = new Set();
 let activeOtherSignal = null;
-let selectedDate = todayKey();
-let progressionDays = 7;
+let progressionDays = 30;
+let progressionSort = 'default';
+let calendarMonth = null; // { year, month }
+let todos = [];
+let dragSrc = null;
 
-function todayKey() {
-  return new Date().toISOString().slice(0,10);
+// ─── STORAGE HELPERS ─────────────────────────────────────────────────────────
+
+function todayKey() { return new Date().toISOString().slice(0,10); }
+function storageKey(date) { return 'wt_' + (date || selectedDate); }
+
+function saveEntry(date, data) {
+  try { localStorage.setItem('wt_' + date, JSON.stringify(data)); } catch(e) {}
 }
 
-function storageKey(date) {
-  return 'wt_' + (date || selectedDate);
+function loadEntry(date) {
+  try { return JSON.parse(localStorage.getItem('wt_' + date)); } catch(e) { return null; }
 }
 
-// Keyword matching rules: each entry maps keywords to needs + a reflection message
-const SIGNAL_RULES = [
-  {
-    keywords: ['snap', 'irritab', 'anger', 'angry', 'rage', 'short temper', 'frustrat', 'agitat', 'tense', 'on edge', 'wound up'],
-    needs: ['rest', 'solitude', 'expression', 'body'],
-    message: 'Irritability and tension often point to an overdue need for <strong>rest</strong> or <strong>solitude</strong>. Your body may also be asking for movement or release. What hasn\'t had space to be expressed today?'
-  },
-  {
-    keywords: ['can\'t focus', 'distract', 'scatter', 'can\'t concentrate', 'drift', 'unfocus', 'mind wander', 'zoning out', 'zone out', 'spacing out'],
-    needs: ['rest', 'meaning', 'intellectual', 'solitude'],
-    message: 'Difficulty focusing can signal that your mind needs either genuine <strong>rest</strong>, or something more meaningful to engage with. Sometimes scattered attention is a quiet protest against doing something that doesn\'t matter to you.'
-  },
-  {
-    keywords: ['scroll', 'phone', 'doom', 'numb', 'dissociat', 'check out', 'zone out', 'escape', 'avoid', 'procrastinat'],
-    needs: ['connection', 'rest', 'meaning', 'expression'],
-    message: 'Numbing or escape behaviours often mask a need for real <strong>connection</strong>, <strong>rest</strong>, or a sense of <strong>meaning</strong>. Worth asking: what feeling is this helping you not feel right now?'
-  },
-  {
-    keywords: ['lonely', 'alone', 'isolated', 'no one', 'nobody', 'miss people', 'invisible', 'unseen', 'unnoticed'],
-    needs: ['connection', 'being-known', 'belonging'],
-    message: 'What you\'re feeling points clearly to <strong>connection</strong> and <strong>being known</strong>. Loneliness is often less about being around people and more about feeling truly seen. Who in your life might be able to receive you right now?'
-  },
-  {
-    keywords: ['sad', 'low', 'down', 'flat', 'empty', 'hollow', 'numb', 'blue', 'grey', 'hopeless', 'pointless', 'what\'s the point'],
-    needs: ['meaning', 'expression', 'connection', 'body'],
-    message: 'Feeling flat or low often signals a need for <strong>meaning</strong> and <strong>expression</strong> — something to connect to, and somewhere for what you\'re carrying to go. Even a small act of making or moving can shift this.'
-  },
-  {
-    keywords: ['anxious', 'anxiety', 'worried', 'worry', 'panic', 'overwhelm', 'too much', 'can\'t cope', 'spiral', 'spinning'],
-    needs: ['rest', 'security', 'stability', 'solitude'],
-    message: 'Anxiety often surfaces when needs for <strong>security</strong> or <strong>stability</strong> feel threatened, or when there\'s simply been too little <strong>rest</strong> and <strong>solitude</strong>. What would help you feel more grounded right now?'
-  },
-  {
-    keywords: ['restless', 'can\'t sit still', 'bored', 'aimless', 'purposeless', 'nothing to do', 'stuck', 'stagnant'],
-    needs: ['play', 'growth', 'meaning', 'body'],
-    message: 'Restlessness can be <strong>play</strong> or <strong>growth</strong> asking for attention — a sign that something in you wants to move, create, or explore. What\'s something you haven\'t let yourself do lately just for the sake of it?'
-  },
-  {
-    keywords: ['withdraw', 'hiding', 'don\'t want to see', 'avoiding people', 'cancel', 'bail', 'shut down', 'close off', 'shut off'],
-    needs: ['solitude', 'rest', 'being-known', 'expression'],
-    message: 'Withdrawal can mean you genuinely need <strong>solitude</strong> and <strong>rest</strong> — or it can mean you\'re protecting yourself from a fear of not being truly <strong>known</strong>. Both are worth sitting with.'
-  },
-  {
-    keywords: ['failure', 'fail', 'not good enough', 'worthless', 'useless', 'behind', 'loser', 'inadequate', 'ashamed', 'shame', 'embarrass'],
-    needs: ['being-known', 'growth', 'expression', 'meaning'],
-    message: 'Feelings of failure often touch a need to be truly <strong>known</strong> — seen in your full complexity, not just your results. They can also signal that your need for <strong>growth</strong> feels blocked or unwitnessed. What would you need to hear right now?'
-  },
-  {
-    keywords: ['tired', 'exhausted', 'depleted', 'drained', 'burnt out', 'no energy', 'can\'t be bothered', 'fatigued', 'wiped'],
-    needs: ['rest', 'self-care', 'solitude', 'body'],
-    message: 'Your body and mind are asking clearly for <strong>rest</strong> and <strong>self-care</strong>. Sometimes depletion is also a sign that too much has been given outward without enough coming back in. What would genuinely restore you today?'
-  },
-  {
-    keywords: ['busy', 'overwhelmed', 'too much', 'can\'t stop', 'always working', 'no time', 'no space', 'no break', 'rushing'],
-    needs: ['rest', 'autonomy', 'play', 'solitude'],
-    message: 'Chronic busyness often crowds out <strong>autonomy</strong> and <strong>play</strong> — the parts of life that are yours, not obligatory. It can also be a way of avoiding stillness. What would it feel like to genuinely stop for an hour today?'
-  },
-  {
-    keywords: ['uninspired', 'uncreative', 'stuck creatively', 'nothing to say', 'blocked', 'flat', 'no ideas', 'dry', 'empty'],
-    needs: ['delight', 'intellectual', 'expression', 'body'],
-    message: 'Creative dryness often follows a deficit of <strong>delight</strong> and <strong>nourishment</strong> — not enough beauty, stimulus, or play coming in. Expression needs feeding. What have you taken in lately that genuinely moved you?'
-  },
-  {
-    keywords: ['miss', 'nostalgic', 'homesick', 'longing', 'yearn', 'want to go back', 'used to'],
-    needs: ['belonging', 'connection', 'being-known', 'meaning'],
-    message: 'Longing and nostalgia point toward <strong>belonging</strong> and <strong>being known</strong> — a sense of home, of people who truly know you. What is it, specifically, that you miss? That often points to what you need now.'
-  },
-  {
-    keywords: ['doubt', 'uncertain', 'lost', 'don\'t know who i am', 'don\'t know what i want', 'confused', 'no direction', 'adrift'],
-    needs: ['meaning', 'autonomy', 'solitude', 'growth'],
-    message: 'Feeling lost or uncertain often calls for <strong>solitude</strong> and quiet time with yourself — space to hear what you actually think and want, beneath the noise. Your need for <strong>meaning</strong> may be asking to be taken seriously.'
-  },
-  {
-    keywords: ['guilty', 'guilt', 'regret', 'should have', 'shouldn\'t have', 'bad person', 'let down', 'let someone down'],
-    needs: ['expression', 'connection', 'being-known', 'meaning'],
-    message: 'Guilt and regret often carry something that needs to be expressed or repaired — they tend to grow in silence. Your needs for <strong>expression</strong> and <strong>connection</strong> may be asking for a conversation, or at least an honest page in your journal.'
-  },
-];
-
-function interpretOtherSignal() {
-  const input = document.getElementById('other-signal-input');
-  const btn = document.getElementById('other-signal-btn');
-  const resultEl = document.getElementById('other-signal-result');
-  const thinkingEl = document.getElementById('ai-thinking');
-  const insightEl = document.getElementById('other-signal-insight');
-  const text = input.value.trim();
-  if (!text) return;
-
-  btn.disabled = true;
-  resultEl.classList.add('visible');
-  thinkingEl.style.display = 'flex';
-  insightEl.innerHTML = '';
-
-  // Small delay for a more considered feel
-  setTimeout(() => {
-    const lower = text.toLowerCase();
-    let matched = [];
-
-    // Score each rule by how many keywords match
-    SIGNAL_RULES.forEach(rule => {
-      const score = rule.keywords.filter(k => lower.includes(k)).length;
-      if (score > 0) matched.push({ rule, score });
-    });
-
-    matched.sort((a, b) => b.score - a.score);
-    const top = matched.slice(0, 2);
-
-    let needIds, message;
-
-    if (top.length === 0) {
-      // Fallback: gentle generic reflection
-      needIds = ['expression', 'solitude', 'being-known'];
-      message = 'It\'s worth sitting with what you\'ve noticed. Sometimes the act of naming something — even to yourself — is a first step toward understanding what need is underneath it. Your needs for <strong>expression</strong> and <strong>solitude</strong> may be worth checking in on today.';
-    } else {
-      // Merge needs from top matches, deduplicated
-      const needSet = new Set();
-      top.forEach(m => m.rule.needs.forEach(n => needSet.add(n)));
-      needIds = Array.from(needSet).slice(0, 4);
-
-      if (top.length >= 2 && top[0].score === top[1].score) {
-        // Two equally matched rules — blend messages
-        message = top[0].rule.message + ' ' + top[1].rule.message.split('.')[0] + '.';
-      } else {
-        message = top[0].rule.message;
-      }
+function getAllEntries() {
+  const entries = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('wt_')) {
+      try { const d = JSON.parse(localStorage.getItem(key)); if (d && d.ratings) entries.push(d); } catch(e) {}
     }
-
-    thinkingEl.style.display = 'none';
-    insightEl.innerHTML = message;
-    activeOtherSignal = { text, needs: needIds, message };
-    updateSignalBanner();
-    btn.disabled = false;
-  }, 600);
+  }
+  return entries.sort((a,b) => a.date.localeCompare(b.date));
 }
+
+function saveTodos() {
+  try { localStorage.setItem('wt_todos', JSON.stringify(todos)); } catch(e) {}
+}
+
+function loadTodos() {
+  try { return JSON.parse(localStorage.getItem('wt_todos')) || []; } catch(e) { return []; }
+}
+
+// ─── FORMAT ──────────────────────────────────────────────────────────────────
 
 function formatDate(d) {
-  // Parse as local date to avoid timezone shift
-  const [y,m,day] = d.split ? d.split('-') : [d.getFullYear(), d.getMonth()+1, d.getDate()];
-  return new Date(+y, +m-1, +day).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  const parts = (typeof d === 'string' ? d : d.toISOString().slice(0,10)).split('-');
+  return new Date(+parts[0], +parts[1]-1, +parts[2]).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 }
+
+function formatShort(d) {
+  const parts = d.split('-');
+  return new Date(+parts[0], +parts[1]-1, +parts[2]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 
 function init() {
   const today = todayKey();
   selectedDate = today;
-  const dateInput = document.getElementById('checkin-date');
-  dateInput.value = today;
-  dateInput.max = today; // can't fill future dates
+  const di = document.getElementById('checkin-date');
+  di.value = today;
+  di.max = today;
   document.getElementById('header-date').textContent = formatDate(today);
+  todos = loadTodos();
   renderSignals();
   renderNeeds();
   checkAlreadyDone();
+  const now = new Date();
+  calendarMonth = { year: now.getFullYear(), month: now.getMonth() };
 }
 
+// ─── TAB NAVIGATION ──────────────────────────────────────────────────────────
+
+function showTab(tab) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab')[['checkin','history','todo','settings'].indexOf(tab)].classList.add('active');
+  if (tab === 'history') renderHistory();
+  if (tab === 'todo') renderTodo();
+}
+
+// ─── CHECK-IN ────────────────────────────────────────────────────────────────
+
 function onDateChange() {
-  const dateInput = document.getElementById('checkin-date');
-  selectedDate = dateInput.value;
+  const di = document.getElementById('checkin-date');
+  selectedDate = di.value;
   const isToday = selectedDate === todayKey();
-  const indicator = document.getElementById('date-indicator');
-  indicator.textContent = isToday ? 'Today' : formatDate(selectedDate);
+  document.getElementById('date-indicator').textContent = isToday ? 'Today' : formatDate(selectedDate);
   document.getElementById('header-date').textContent = formatDate(selectedDate);
+  document.getElementById('submit-btn').textContent = isToday ? 'Save check-in' : 'Save check-in for ' + formatShort(selectedDate);
 
-  // Reset form state
-  ratings = {};
-  activeSignals = new Set();
-  activeOtherSignal = null;
-  renderSignals();
-  renderNeeds();
-
-  // Reset other signal UI
+  ratings = {}; activeSignals = new Set(); activeOtherSignal = null;
+  renderSignals(); renderNeeds();
   document.getElementById('other-signal-input').value = '';
   document.getElementById('other-signal-result').classList.remove('visible');
   document.getElementById('other-signal-insight').innerHTML = '';
   document.getElementById('signal-insight').classList.remove('visible');
   document.getElementById('signal-banner').classList.remove('visible');
-
-  // Show form or complete state
   document.getElementById('complete-state').classList.remove('visible');
   document.getElementById('checkin-form').style.display = 'block';
   checkAlreadyDone();
 }
 
 function checkAlreadyDone() {
-  const saved = loadForDate(selectedDate);
+  const saved = loadEntry(selectedDate);
   if (saved) showCompleteState(saved);
 }
 
-function loadForDate(date) {
-  try { return JSON.parse(localStorage.getItem(storageKey(date))); } catch(e) { return null; }
+function editCurrentEntry() {
+  const saved = loadEntry(selectedDate);
+  if (!saved) return;
+  ratings = { ...saved.ratings };
+  activeSignals = new Set(saved.signals || []);
+  activeOtherSignal = saved.otherSignal ? { text: saved.otherSignal, needs: [], message: '' } : null;
+  document.getElementById('complete-state').classList.remove('visible');
+  document.getElementById('checkin-form').style.display = 'block';
+  renderSignals();
+  // restore signal checkboxes
+  activeSignals.forEach(id => {
+    const el = document.getElementById('sig-' + id);
+    if (el) el.classList.add('active');
+  });
+  renderNeeds();
+  // restore ratings
+  Object.entries(ratings).forEach(([id, v]) => applyRatingUI(id, v));
 }
 
 function renderSignals() {
-  const grid = document.getElementById('signal-grid');
-  grid.innerHTML = SIGNALS.map(s => `
+  document.getElementById('signal-grid').innerHTML = SIGNALS.map(s => `
     <div class="signal-item" id="sig-${s.id}" onclick="toggleSignal('${s.id}')">
-      <div class="signal-check">
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2 5l2.5 2.5 3.5-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
+      <div class="signal-check"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 3.5-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <div class="signal-label">${s.label}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function toggleSignal(id) {
   const el = document.getElementById('sig-' + id);
-  if (activeSignals.has(id)) {
-    activeSignals.delete(id);
-    el.classList.remove('active');
-  } else {
-    activeSignals.add(id);
-    el.classList.add('active');
-  }
-  updateSignalInsight();
-  updateSignalBanner();
+  if (activeSignals.has(id)) { activeSignals.delete(id); el.classList.remove('active'); }
+  else { activeSignals.add(id); el.classList.add('active'); }
+  updateSignalInsight(); updateSignalBanner();
 }
 
 function updateSignalInsight() {
   const box = document.getElementById('signal-insight');
   const txt = document.getElementById('signal-insight-text');
-  if (activeSignals.size === 0) { box.classList.remove('visible'); return; }
+  if (!activeSignals.size) { box.classList.remove('visible'); return; }
   box.classList.add('visible');
   txt.innerHTML = Array.from(activeSignals).map(id => `<p style="margin-bottom:8px">${SIGNAL_MESSAGES[id]}</p>`).join('');
 }
 
 function updateSignalBanner() {
   const banner = document.getElementById('signal-banner');
-  const txt = document.getElementById('signal-banner-text');
   const hasAny = activeSignals.size > 0 || activeOtherSignal;
   if (!hasAny) { banner.classList.remove('visible'); return; }
   const highlighted = new Set();
-  activeSignals.forEach(sid => {
-    const s = SIGNALS.find(s => s.id === sid);
-    if (s) s.needs.forEach(n => highlighted.add(n));
-  });
-  if (activeOtherSignal) {
-    activeOtherSignal.needs.forEach(n => highlighted.add(n));
-  }
+  activeSignals.forEach(sid => { const s = SIGNALS.find(x => x.id === sid); if (s) s.needs.forEach(n => highlighted.add(n)); });
+  if (activeOtherSignal) activeOtherSignal.needs.forEach(n => highlighted.add(n));
   banner.classList.add('visible');
-  txt.innerHTML = `The needs marked below may be particularly relevant today based on your signals.`;
+  document.getElementById('signal-banner-text').innerHTML = 'The needs below may be particularly relevant today.';
   NEEDS.forEach(n => {
     const card = document.getElementById('card-' + n.id);
     if (!card) return;
-    if (highlighted.has(n.id)) {
-      card.style.borderColor = 'rgba(224, 112, 112, 0.25)';
-    } else {
-      if (!ratings[n.id]) card.style.borderColor = '';
-    }
+    if (highlighted.has(n.id)) card.classList.add('signal-highlight');
+    else card.classList.remove('signal-highlight');
   });
 }
 
+function interpretOtherSignal() {
+  const input = document.getElementById('other-signal-input');
+  const resultEl = document.getElementById('other-signal-result');
+  const thinkingEl = document.getElementById('ai-thinking');
+  const insightEl = document.getElementById('other-signal-insight');
+  const text = input.value.trim();
+  if (!text) return;
+  resultEl.classList.add('visible');
+  thinkingEl.style.display = 'flex';
+  insightEl.innerHTML = '';
+  setTimeout(() => {
+    const lower = text.toLowerCase();
+    let matched = [];
+    SIGNAL_RULES.forEach(rule => {
+      const score = rule.keywords.filter(k => lower.includes(k)).length;
+      if (score > 0) matched.push({ rule, score });
+    });
+    matched.sort((a,b) => b.score - a.score);
+    const top = matched.slice(0, 2);
+    let needIds, message;
+    if (!top.length) {
+      needIds = ['expression','solitude','being-known'];
+      message = 'It\'s worth sitting with what you\'ve noticed. Sometimes naming something is the first step. Your needs for <strong>expression</strong> and <strong>solitude</strong> may be worth checking in on today.';
+    } else {
+      const needSet = new Set();
+      top.forEach(m => m.rule.needs.forEach(n => needSet.add(n)));
+      needIds = Array.from(needSet).slice(0,4);
+      message = top.length >= 2 && top[0].score === top[1].score
+        ? top[0].rule.message + ' ' + top[1].rule.message.split('.')[0] + '.'
+        : top[0].rule.message;
+    }
+    thinkingEl.style.display = 'none';
+    insightEl.innerHTML = message;
+    activeOtherSignal = { text, needs: needIds, message };
+    updateSignalBanner();
+  }, 600);
+}
+
 function renderNeeds() {
-  const list = document.getElementById('needs-list');
-  list.innerHTML = NEEDS.map(n => `
+  document.getElementById('needs-list').innerHTML = NEEDS.map(n => `
     <div class="need-card" id="card-${n.id}">
       <div class="need-header">
-        <div>
-          <div class="need-name">${n.name}</div>
-          <div class="need-desc">${n.desc}</div>
-        </div>
+        <div><div class="need-name">${n.name}</div><div class="need-desc">${n.desc}</div></div>
         <div class="need-score-display" id="score-${n.id}">·</div>
       </div>
-      <div class="rating" id="rating-${n.id}">
-        ${[1,2,3,4,5].map(v => `
-          <button class="rating-dot ${v <= 2 ? 'low' : ''}" id="dot-${n.id}-${v}" onclick="rate('${n.id}', ${v})">${v}</button>
-        `).join('')}
-      </div>
+      <div class="rating">${[1,2,3,4,5].map(v => `<button class="rating-dot ${v<=2?'low':''}" id="dot-${n.id}-${v}" onclick="rate('${n.id}',${v})">${v}</button>`).join('')}</div>
       <div class="suggestions" id="sugg-${n.id}" style="display:none">
         <div class="suggestions-title">Low-cost ideas</div>
         ${n.suggestions.map(s => `<span class="suggestion-tag">${s}</span>`).join('')}
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 function rate(needId, value) {
   ratings[needId] = value;
-  const card = document.getElementById('card-' + needId);
-  const scoreEl = document.getElementById('score-' + needId);
-  const suggEl = document.getElementById('sugg-' + needId);
+  applyRatingUI(needId, value);
+}
 
-  // update dots
+function applyRatingUI(needId, value) {
   for (let v = 1; v <= 5; v++) {
     const dot = document.getElementById(`dot-${needId}-${v}`);
-    dot.classList.toggle('selected', v === value);
+    if (dot) dot.classList.toggle('selected', v === value);
   }
-
-  // update score display
-  scoreEl.textContent = value;
-  scoreEl.className = 'need-score-display ' + (value > 0 ? (value <= 2 ? 'low has-value' : 'has-value') : '');
-
-  // card state
-  card.classList.remove('rated', 'low-rated');
-  if (value <= 2) {
-    card.classList.add('low-rated');
-    suggEl.style.display = 'block';
-  } else {
-    card.classList.add('rated');
-    suggEl.style.display = 'none';
-  }
+  const scoreEl = document.getElementById('score-' + needId);
+  if (scoreEl) { scoreEl.textContent = value; scoreEl.className = 'need-score-display ' + (value <= 2 ? 'low has-value' : 'has-value'); }
+  const card = document.getElementById('card-' + needId);
+  const suggEl = document.getElementById('sugg-' + needId);
+  if (card) { card.classList.toggle('rated', value > 2); card.classList.toggle('low-rated', value <= 2); }
+  if (suggEl) suggEl.style.display = value <= 2 ? 'block' : 'none';
 }
 
 function submitCheckin() {
-  const total = Object.keys(ratings).length;
-  if (total < 5) {
-    alert('Please rate at least 5 needs before saving.');
-    return;
-  }
-  const data = {
-    date: selectedDate,
-    ratings,
-    signals: Array.from(activeSignals),
-    otherSignal: activeOtherSignal ? activeOtherSignal.text : null,
-  };
-  try { localStorage.setItem(storageKey(selectedDate), JSON.stringify(data)); } catch(e) {}
+  if (Object.keys(ratings).length < 5) { alert('Please rate at least 5 needs before saving.'); return; }
+  const data = { date: selectedDate, ratings, signals: Array.from(activeSignals), otherSignal: activeOtherSignal ? activeOtherSignal.text : null };
+  saveEntry(selectedDate, data);
   showCompleteState(data);
 }
 
 function showCompleteState(data) {
   document.getElementById('checkin-form').style.display = 'none';
-  const cs = document.getElementById('complete-state');
-  cs.classList.add('visible');
-
+  document.getElementById('complete-state').classList.add('visible');
   const vals = Object.values(data.ratings);
   const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '—';
   const low = NEEDS.filter(n => data.ratings[n.id] && data.ratings[n.id] <= 2).map(n => n.name);
-  const dateLabel = data.date === todayKey() ? 'today' : formatDate(data.date);
-  let summary = `Check-in for ${dateLabel}: average <strong>${avg} / 5</strong>.`;
+  const label = data.date === todayKey() ? 'today' : formatDate(data.date);
+  document.getElementById('complete-title').textContent = data.date === todayKey() ? 'Check-in complete' : 'Entry saved';
+  let summary = `Check-in for ${label}: average <strong>${avg} / 5</strong>.`;
   if (low.length) summary += ` Needs that may need attention: ${low.join(', ')}.`;
   document.getElementById('complete-summary').innerHTML = summary;
 }
 
-function showView(v) {
-  document.getElementById('checkin-view').style.display = v === 'checkin' ? 'block' : 'none';
-  document.getElementById('history-view').style.display = v === 'history' ? 'block' : 'none';
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&v==='checkin')||(i===1&&v==='history')));
-  if (v === 'history') renderHistory();
-}
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
 
 function showHistoryTab(tab) {
-  const logEl = document.getElementById('log-view');
-  const progEl = document.getElementById('progression-view');
-  document.querySelectorAll('.history-subtab').forEach((t,i) =>
-    t.classList.toggle('active', (i===0&&tab==='log')||(i===1&&tab==='progression'))
-  );
-  if (tab === 'log') {
-    logEl.classList.remove('hidden');
-    progEl.classList.remove('visible');
-  } else {
-    logEl.classList.add('hidden');
-    progEl.classList.add('visible');
-    renderProgression();
-  }
+  document.getElementById('history-log-view').style.display = tab === 'log' ? 'block' : 'none';
+  document.getElementById('history-calendar-view').style.display = tab === 'calendar' ? 'block' : 'none';
+  document.getElementById('history-progression-view').style.display = tab === 'progression' ? 'block' : 'none';
+  document.querySelectorAll('.subtab').forEach((t,i) => t.classList.toggle('active', ['log','calendar','progression'].indexOf(tab) === i));
+  if (tab === 'calendar') renderCalendar();
+  if (tab === 'progression') renderProgression();
 }
+
+function renderHistory() {
+  const entries = getAllEntries().reverse();
+  const allVals = entries.flatMap(e => Object.values(e.ratings));
+  if (allVals.length) {
+    const avg = allVals.reduce((a,b)=>a+b,0)/allVals.length;
+    document.getElementById('ring-progress').style.strokeDashoffset = 150.8 * (1 - avg/5);
+    document.getElementById('ring-label').textContent = avg.toFixed(1) + ' / 5';
+    document.getElementById('ring-sub').textContent = `Across ${entries.length} check-in${entries.length>1?'s':''}`;
+  } else {
+    document.getElementById('ring-label').textContent = 'No data yet';
+    document.getElementById('ring-sub').textContent = 'Start checking in daily';
+  }
+
+  if (!entries.length) {
+    document.getElementById('history-list').innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0">No check-ins yet.</p>';
+    return;
+  }
+
+  document.getElementById('history-list').innerHTML = entries.map(e => {
+    const vals = Object.values(e.ratings);
+    const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+    const low = NEEDS.filter(n => e.ratings[n.id] && e.ratings[n.id] <= 2).map(n => n.name);
+    const detailRows = NEEDS.map(n => {
+      if (!e.ratings[n.id]) return '';
+      const v = e.ratings[n.id];
+      return `<div class="detail-row"><div class="detail-name">${n.name}</div><div class="detail-score ${v<=2?'low':'ok'}">${v}</div></div>`;
+    }).join('');
+    const sigText = [
+      ...(e.signals||[]).map(s => SIGNALS.find(x=>x.id===s)?.label||s),
+      ...(e.otherSignal ? [`"${e.otherSignal}"`] : [])
+    ].join(', ');
+    return `
+      <div class="history-day">
+        <div class="history-day-header" onclick="toggleDayDetail('${e.date}')">
+          <div class="history-day-left">
+            <div class="history-day-date">${formatDate(e.date)}</div>
+            ${low.length ? `<div class="history-day-needs">Unmet: ${low.join(', ')}</div>` : ''}
+          </div>
+          <div class="history-day-right">
+            <div class="history-day-avg">${avg}</div>
+            <div class="history-day-chevron" id="chev-${e.date}">▾</div>
+          </div>
+        </div>
+        <div class="history-day-detail" id="detail-${e.date}">
+          <div class="detail-grid">${detailRows}</div>
+          ${sigText ? `<p style="font-size:11px;color:var(--warn);margin-top:10px">⚠ ${sigText}</p>` : ''}
+          <div class="history-day-actions">
+            <button class="btn-small" onclick="goEditDate('${e.date}')">Edit this entry</button>
+            <button class="btn-danger" onclick="deleteEntry('${e.date}')">Delete</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleDayDetail(date) {
+  const d = document.getElementById('detail-' + date);
+  const c = document.getElementById('chev-' + date);
+  const open = d.classList.toggle('open');
+  c.classList.toggle('open', open);
+}
+
+function goEditDate(date) {
+  selectedDate = date;
+  document.getElementById('checkin-date').value = date;
+  showTab('checkin');
+  onDateChange();
+  setTimeout(() => editCurrentEntry(), 100);
+}
+
+function deleteEntry(date) {
+  if (!confirm('Delete entry for ' + formatDate(date) + '?')) return;
+  localStorage.removeItem('wt_' + date);
+  renderHistory();
+}
+
+// ─── CALENDAR ────────────────────────────────────────────────────────────────
+
+function renderCalendar() {
+  const { year, month } = calendarMonth;
+  const entries = new Set(getAllEntries().map(e => e.date));
+  const today = todayKey();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const monthName = new Date(year, month).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const dayLabels = ['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => `<div class="cal-day-label">${d}</div>`).join('');
+  let cells = '';
+  for (let i = 0; i < firstDay; i++) cells += '<div class="cal-cell empty"></div>';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isFuture = dateStr > today;
+    const hasEntry = entries.has(dateStr);
+    const isToday = dateStr === today;
+    const isSelected = dateStr === selectedDate;
+    const cls = ['cal-cell', hasEntry?'has-entry':'', isToday?'today':'', isSelected?'selected':'', isFuture?'future':''].filter(Boolean).join(' ');
+    cells += `<div class="${cls}" onclick="selectCalDate('${dateStr}')">${d}</div>`;
+  }
+  document.getElementById('calendar-wrap').innerHTML = `
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calNav(-1)">‹</button>
+      <div class="cal-month">${monthName}</div>
+      <button class="cal-nav" onclick="calNav(1)">›</button>
+    </div>
+    <div class="cal-grid">${dayLabels}${cells}</div>`;
+}
+
+function calNav(dir) {
+  calendarMonth.month += dir;
+  if (calendarMonth.month < 0) { calendarMonth.month = 11; calendarMonth.year--; }
+  if (calendarMonth.month > 11) { calendarMonth.month = 0; calendarMonth.year++; }
+  renderCalendar();
+}
+
+function selectCalDate(date) {
+  if (date > todayKey()) return;
+  selectedDate = date;
+  document.getElementById('checkin-date').value = date;
+  renderCalendar();
+  showTab('checkin');
+  onDateChange();
+}
+
+// ─── PROGRESSION ─────────────────────────────────────────────────────────────
 
 function setPeriod(days, btn) {
   progressionDays = days;
@@ -1350,134 +861,245 @@ function setPeriod(days, btn) {
   renderProgression();
 }
 
-function getAllEntries() {
-  const entries = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key.startsWith('wt_')) {
-      try {
-        const d = JSON.parse(localStorage.getItem(key));
-        if (d && d.ratings) entries.push(d);
-      } catch(e) {}
-    }
-  }
-  return entries.sort((a,b) => a.date.localeCompare(b.date));
-}
-
-function renderHistory() {
-  const entries = getAllEntries().reverse();
-
-  // Update ring with all-time average
-  if (!entries.length) {
-    document.getElementById('history-list').innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0">No check-ins yet. Start today.</p>';
-    document.getElementById('ring-label').textContent = 'No data yet';
-    document.getElementById('ring-sub').textContent = 'Start checking in daily';
-    return;
-  }
-
-  const allVals = entries.flatMap(e => Object.values(e.ratings));
-  const overallAvg = allVals.length ? (allVals.reduce((a,b)=>a+b,0)/allVals.length) : 0;
-  document.getElementById('ring-progress').style.strokeDashoffset = 175.9 * (1 - overallAvg/5);
-  document.getElementById('ring-label').textContent = overallAvg.toFixed(1) + ' / 5';
-  document.getElementById('ring-sub').textContent = `Across ${entries.length} check-in${entries.length>1?'s':''}`;
-
-  document.getElementById('history-list').innerHTML = entries.map(e => {
-    const vals = Object.values(e.ratings);
-    const avg = (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
-    const sample = NEEDS.slice(0,10);
-    const bars = sample.map(n => {
-      const v = e.ratings[n.id] || 0;
-      const pct = (v/5)*100;
-      return `
-        <div class="history-bar-item">
-          <div class="history-bar-label">${n.name.split(' ')[0]}</div>
-          <div class="history-bar-track">
-            <div class="history-bar-fill ${v <= 2 && v > 0 ? 'low' : ''}" style="height:${pct}%"></div>
-          </div>
-        </div>`;
-    }).join('');
-    return `
-      <div class="history-day">
-        <div class="history-day-header">
-          <div class="history-day-date">${formatDate(e.date)}</div>
-          <div class="history-day-avg">${avg}</div>
-        </div>
-        <div class="history-bars">${bars}</div>
-        ${e.signals && e.signals.length ? `<p style="font-size:11px;color:var(--warn);margin-top:12px">⚠ Signals: ${e.signals.map(s=>SIGNALS.find(x=>x.id===s)?.label||s).join(', ')}${e.otherSignal ? ` · "${e.otherSignal}"` : ''}</p>` : (e.otherSignal ? `<p style="font-size:11px;color:var(--warn);margin-top:12px">⚠ Other signal: "${e.otherSignal}"</p>` : '')}
-      </div>`;
-  }).join('');
+function setSort(sort, btn) {
+  progressionSort = sort;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProgression();
 }
 
 function renderProgression() {
-  const list = document.getElementById('progression-list');
-  const allEntries = getAllEntries();
-
-  // Filter to period
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - progressionDays);
   const cutoffStr = cutoff.toISOString().slice(0,10);
-  const entries = allEntries.filter(e => e.date >= cutoffStr);
+  const entries = getAllEntries().filter(e => e.date >= cutoffStr);
 
   if (entries.length < 2) {
-    list.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0">Not enough data for this period yet. Keep checking in.</p>';
+    document.getElementById('compound-graph').innerHTML = '';
+    document.getElementById('progression-list').innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:40px 0">Not enough data for this period yet.</p>';
     return;
   }
 
-  // For each need, compute avg, trend (first half vs second half), and sparkline points
+  // Compound graph (all needs, monthly period, 30 day)
+  renderCompoundGraph(entries);
+
   const half = Math.floor(entries.length / 2);
-
-  list.innerHTML = NEEDS.map(n => {
-    const vals = entries.map(e => e.ratings[n.id] || null).filter(v => v !== null);
-    if (!vals.length) return '';
-
+  let needStats = NEEDS.map(n => {
+    const vals = entries.map(e => e.ratings[n.id]).filter(Boolean);
+    if (!vals.length) return null;
     const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
-    const firstHalf = entries.slice(0, half).map(e => e.ratings[n.id]).filter(Boolean);
-    const secondHalf = entries.slice(half).map(e => e.ratings[n.id]).filter(Boolean);
-    const avgFirst = firstHalf.length ? firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length : avg;
-    const avgSecond = secondHalf.length ? secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length : avg;
-    const diff = avgSecond - avgFirst;
+    const firstHalf = entries.slice(0,half).map(e=>e.ratings[n.id]).filter(Boolean);
+    const secondHalf = entries.slice(half).map(e=>e.ratings[n.id]).filter(Boolean);
+    const avgF = firstHalf.length ? firstHalf.reduce((a,b)=>a+b,0)/firstHalf.length : avg;
+    const avgS = secondHalf.length ? secondHalf.reduce((a,b)=>a+b,0)/secondHalf.length : avg;
+    const diff = avgS - avgF;
+    return { n, avg, diff, vals: entries.map(e => e.ratings[n.id] || 0) };
+  }).filter(Boolean);
+
+  if (progressionSort === 'asc') needStats.sort((a,b) => a.avg - b.avg);
+  else if (progressionSort === 'desc') needStats.sort((a,b) => b.avg - a.avg);
+
+  document.getElementById('progression-list').innerHTML = needStats.map(({ n, avg, diff, vals }) => {
     const trendClass = diff > 0.3 ? 'up' : diff < -0.3 ? 'down' : 'flat';
     const trendLabel = diff > 0.3 ? '↑ improving' : diff < -0.3 ? '↓ declining' : '→ steady';
-
-    // Sparkline: plot all ratings across period
-    const sparkVals = entries.map(e => e.ratings[n.id] || 0);
-    const svgW = 300, svgH = 36;
-    const pts = sparkVals.map((v, i) => {
-      const x = sparkVals.length === 1 ? svgW/2 : (i / (sparkVals.length-1)) * svgW;
-      const y = svgH - (v/5) * svgH;
+    const sparkColor = avg <= 2 ? '#e07070' : '#c9a96e';
+    const W = 300, H = 36;
+    const pts = vals.map((v,i) => {
+      const x = vals.length === 1 ? W/2 : (i/(vals.length-1))*W;
+      const y = H - (v/5)*H;
       return `${x},${y}`;
     }).join(' ');
-
-    const sparkColor = avg <= 2 ? '#e07070' : '#c9a96e';
-
     return `
       <div class="need-progress-card">
         <div class="need-progress-header">
           <div class="need-progress-name">${n.name}</div>
           <div class="need-progress-stats">
-            <div class="need-avg ${avg <= 2 ? 'low' : ''}">${avg.toFixed(1)}</div>
+            <div class="need-avg ${avg<=2?'low':''}">${avg.toFixed(1)}</div>
             <div class="need-trend ${trendClass}">${trendLabel}</div>
           </div>
         </div>
         <div class="sparkline-wrap">
-          <svg viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="none">
+          <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
             <polyline points="${pts}" fill="none" stroke="${sparkColor}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-            ${sparkVals.map((v, i) => {
-              const x = sparkVals.length === 1 ? svgW/2 : (i / (sparkVals.length-1)) * svgW;
-              const y = svgH - (v/5) * svgH;
-              return `<circle cx="${x}" cy="${y}" r="3" fill="${sparkColor}"/>`;
-            }).join('')}
+            ${vals.map((v,i) => { const x = vals.length===1?W/2:(i/(vals.length-1))*W; const y=H-(v/5)*H; return `<circle cx="${x}" cy="${y}" r="3" fill="${sparkColor}"/>`; }).join('')}
           </svg>
         </div>
       </div>`;
-  }).filter(Boolean).join('');
+  }).join('');
 }
 
-// Register service worker
+function renderCompoundGraph(entries) {
+  if (entries.length < 2) { document.getElementById('compound-graph').innerHTML = ''; return; }
+  const W = 600, H = 100;
+  const colors = ['#c9a96e','#e07070','#7cad8e','#7090c9','#c97090','#90c970','#c9c070','#7090a9'];
+  const lines = NEEDS.slice(0,8).map((n, ni) => {
+    const vals = entries.map(e => e.ratings[n.id] || 0);
+    const pts = vals.map((v,i) => {
+      const x = (i/(vals.length-1))*W;
+      const y = H - (v/5)*H;
+      return `${x},${y}`;
+    }).join(' ');
+    return `<polyline points="${pts}" fill="none" stroke="${colors[ni]}" stroke-width="1.5" opacity="0.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }).join('');
+  const xLabels = entries.filter((_,i) => i === 0 || i === entries.length-1 || i === Math.floor(entries.length/2)).map((e,_,arr) => {
+    const idx = entries.indexOf(e);
+    const x = (idx/(entries.length-1))*W;
+    return `<text x="${x}" y="${H+14}" font-size="10" fill="#444" text-anchor="middle">${formatShort(e.date)}</text>`;
+  }).join('');
+
+  document.getElementById('compound-graph').innerHTML = `
+    <div class="compound-title">All needs — overview</div>
+    <div class="compound-svg-wrap">
+      <svg viewBox="0 0 ${W} ${H+20}" preserveAspectRatio="none" width="100%" height="120">
+        <line x1="0" y1="0" x2="${W}" y2="0" stroke="#2a2a2a" stroke-width="0.5"/>
+        <line x1="0" y1="${H/2}" x2="${W}" y2="${H/2}" stroke="#2a2a2a" stroke-width="0.5" stroke-dasharray="4,4"/>
+        <line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="#2a2a2a" stroke-width="0.5"/>
+        ${lines}${xLabels}
+      </svg>
+    </div>`;
+}
+
+// ─── TODO LIST ────────────────────────────────────────────────────────────────
+
+function renderTodo() {
+  // Coverage panel — based on last check-in
+  renderCoverage();
+
+  const list = document.getElementById('todo-list');
+  if (!todos.length) {
+    list.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:30px 0">No tasks yet. Add one above.</p>';
+    return;
+  }
+  list.innerHTML = todos.map((t,i) => {
+    const needTags = NEEDS.map(n => {
+      const assigned = (t.needs||[]).includes(n.id);
+      return `<span class="todo-need-tag ${assigned?'assigned':''}" onclick="toggleTodoNeed(${i},'${n.id}')">${n.name}</span>`;
+    }).join('');
+    return `
+      <div class="todo-item ${t.done?'done':''}" id="todo-${i}"
+        draggable="true" ondragstart="dragStart(event,${i})" ondragover="dragOver(event,${i})" ondrop="dragDrop(event,${i})" ondragleave="dragLeave(event,${i})">
+        <div class="todo-top">
+          <div class="todo-drag">⠿</div>
+          <div class="todo-check" onclick="toggleTodoDone(${i})"><div class="todo-check-inner"></div></div>
+          <div class="todo-text">${escHtml(t.text)}</div>
+          <div class="todo-delete" onclick="deleteTodo(${i})">×</div>
+        </div>
+        <div class="todo-needs-row">${needTags}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderCoverage() {
+  const covEl = document.getElementById('needs-coverage');
+  // Get last entry ratings for context
+  const lastEntry = getAllEntries().slice(-1)[0];
+  const assignedNeeds = new Set(todos.flatMap(t => t.needs || []));
+  const chips = NEEDS.map(n => {
+    const covered = assignedNeeds.has(n.id);
+    const isLow = lastEntry && lastEntry.ratings[n.id] && lastEntry.ratings[n.id] <= 2;
+    return `<span class="coverage-chip ${covered?'covered':''} ${!covered&&isLow?'uncovered':''}">${n.name}</span>`;
+  }).join('');
+  covEl.innerHTML = `<div class="coverage-title">Needs coverage · assigned to tasks</div><div class="coverage-grid">${chips}</div>`;
+}
+
+function addTodo() {
+  const input = document.getElementById('todo-input');
+  const text = input.value.trim();
+  if (!text) return;
+  todos.push({ text, done: false, needs: [] });
+  saveTodos();
+  input.value = '';
+  renderTodo();
+}
+
+function toggleTodoDone(i) {
+  todos[i].done = !todos[i].done;
+  saveTodos();
+  renderTodo();
+}
+
+function toggleTodoNeed(i, needId) {
+  const t = todos[i];
+  if (!t.needs) t.needs = [];
+  const idx = t.needs.indexOf(needId);
+  if (idx >= 0) t.needs.splice(idx, 1);
+  else t.needs.push(needId);
+  saveTodos();
+  renderTodo();
+}
+
+function deleteTodo(i) {
+  todos.splice(i, 1);
+  saveTodos();
+  renderTodo();
+}
+
+// Drag and drop
+function dragStart(e, i) { dragSrc = i; e.currentTarget.classList.add('dragging'); }
+function dragOver(e, i) { e.preventDefault(); if (i !== dragSrc) document.getElementById('todo-'+i).classList.add('drag-over'); }
+function dragLeave(e, i) { document.getElementById('todo-'+i).classList.remove('drag-over'); }
+function dragDrop(e, i) {
+  e.preventDefault();
+  document.getElementById('todo-'+i).classList.remove('drag-over');
+  if (dragSrc === null || dragSrc === i) return;
+  const moved = todos.splice(dragSrc, 1)[0];
+  todos.splice(i, 0, moved);
+  dragSrc = null;
+  saveTodos();
+  renderTodo();
+}
+
+// ─── BACKUP ───────────────────────────────────────────────────────────────────
+
+function exportData() {
+  const data = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (key.startsWith('wt_') )) {
+      data[key] = localStorage.getItem(key);
+    }
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'wholeness-backup-' + todayKey() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      let count = 0;
+      Object.entries(data).forEach(([key, val]) => {
+        if (key.startsWith('wt_')) { localStorage.setItem(key, val); count++; }
+      });
+      alert(`Imported ${count} records successfully.`);
+      if (data['wt_todos']) { todos = loadTodos(); }
+      renderHistory();
+    } catch(err) {
+      alert('Could not read this file. Make sure it\'s a valid Wholeness backup.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── SERVICE WORKER ───────────────────────────────────────────────────────────
+
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
 }
 
 init();
