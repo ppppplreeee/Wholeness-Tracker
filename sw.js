@@ -1,4 +1,4 @@
-const CACHE = 'wholeness-v4';
+const CACHE = 'wholeness-v5';
 const ASSETS = [
   './index.html',
   './manifest.json',

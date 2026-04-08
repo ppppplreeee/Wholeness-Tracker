@@ -226,6 +226,12 @@ body::before { content: ''; position: fixed; inset: 0; background-image: url("da
 .todo-need-tag { font-size: 10px; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); color: var(--text-muted); background: var(--surface2); cursor: pointer; transition: all 0.15s; }
 .todo-need-tag.assigned { border-color: rgba(201,169,110,0.3); color: var(--accent); background: var(--accent-soft); }
 .todo-need-tag.low-need { border-color: rgba(224,112,112,0.3); color: var(--warn); background: var(--warn-soft); }
+.todo-needs-toggle { font-size: 10px; color: var(--text-muted); cursor: pointer; margin-top: 8px; margin-left: 28px; display: inline-flex; align-items: center; gap: 4px; padding: 3px 0; transition: color 0.15s; user-select: none; }
+.todo-needs-toggle:hover { color: var(--accent); }
+.todo-needs-toggle .toggle-arrow { transition: transform 0.2s; display: inline-block; }
+.todo-needs-toggle.open .toggle-arrow { transform: rotate(90deg); }
+.todo-needs-panel { display: none; }
+.todo-needs-panel.open { display: block; }
 .needs-coverage { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 15px 17px; margin-bottom: 16px; }
 .coverage-title { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
 .coverage-grid { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -423,7 +429,6 @@ const NEEDS = [
   { id: 'meaning', name: 'Meaning-Making', desc: 'Art, thought, research, spiritual inquiry', suggestions: ['Read philosophy, poetry, or something that makes you think', 'Visit a church, sacred space, or somewhere quietly powerful', 'Sit with a question and let it stay open', 'Work on your tarot project with intention', 'Write about what matters to you and why', 'Find a piece of art that moves you', 'Watch a film that poses a real question', 'Read about a spiritual or philosophical tradition', 'Spend time in nature with no agenda', 'Write about your values and what you\'re living for'] },
   { id: 'body', name: 'Body & Sensory Aliveness', desc: 'Movement, sensation, physical presence', suggestions: ['Dance alone to 3 songs you love', 'Go for a run, cycle, or long walk', 'Take a long shower and be present in it', 'Do a yoga or stretching session', 'Wear something that makes you feel good', 'Cook with attention to smell, texture, and taste', 'Get a massage or give yourself one', 'Put on a scent that grounds you', 'Swim, if possible', 'Move your body in any way that feels good today'] },
   { id: 'transcendence', name: 'Transcendence', desc: 'A felt sense of something larger than yourself', suggestions: ['Spend unhurried time in nature', 'Meditate or sit in silence', 'Read or watch something awe-inspiring', 'Attend a service, ceremony, or ritual', 'Stand somewhere with a wide view', 'Look at the night sky', 'Read about the cosmos, deep time, or deep ecology', 'Visit somewhere historically or spiritually significant', 'Practise gratitude for what exists', 'Let yourself be moved by music, art, or beauty'] },
-  { id: 'homemaking', name: 'Home Making', desc: 'Building a home that feels yours', suggestions: ['Add one personal touch to your space', 'Frame or display something meaningful', 'Buy a plant or something living for your flat', 'Sort one area you\'ve been avoiding', 'Invest time in making one room feel more settled', 'Cook and eat at home deliberately', 'Create a small ritual that anchors you to your space', 'Tidy as an act of self-respect not obligation', 'Invite someone over — inhabit your space fully', 'Walk around your neighbourhood as if it\'s yours'] },
 ];
 
 const SIGNALS = [
@@ -962,31 +967,42 @@ function renderCompoundGraph(entries) {
 // ─── TODO LIST ────────────────────────────────────────────────────────────────
 
 function renderTodo() {
-  // Coverage panel — based on last check-in
   renderCoverage();
-
   const list = document.getElementById('todo-list');
   if (!todos.length) {
     list.innerHTML = '<p style="color:var(--text-dim);font-size:13px;text-align:center;padding:30px 0">No tasks yet. Add one above.</p>';
     return;
   }
   list.innerHTML = todos.map((t,i) => {
-    const needTags = NEEDS.map(n => {
-      const assigned = (t.needs||[]).includes(n.id);
-      return `<span class="todo-need-tag ${assigned?'assigned':''}" onclick="toggleTodoNeed(${i},'${n.id}')">${n.name}</span>`;
+    const assigned = t.needs || [];
+    const assignedTags = assigned.map(nid => {
+      const n = NEEDS.find(x => x.id === nid);
+      return n ? `<span class="todo-need-tag assigned" onclick="toggleTodoNeed(${i},'${nid}')">${n.name}</span>` : '';
     }).join('');
+    const allNeedTags = NEEDS.map(n => {
+      const isAssigned = assigned.includes(n.id);
+      return `<span class="todo-need-tag ${isAssigned?'assigned':''}" onclick="toggleTodoNeed(${i},'${n.id}')">${n.name}</span>`;
+    }).join('');
+    const hasAssigned = assigned.length > 0;
+    const summaryText = hasAssigned ? `${assigned.length} need${assigned.length>1?'s':''} assigned` : 'Assign needs ›';
     return `
-      <div class="todo-item ${t.done?'done':''}" id="todo-${i}"
-        draggable="true" ondragstart="dragStart(event,${i})" ondragover="dragOver(event,${i})" ondrop="dragDrop(event,${i})" ondragleave="dragLeave(event,${i})">
+      <div class="todo-item ${t.done?'done':''}" id="todo-${i}" data-index="${i}">
         <div class="todo-top">
-          <div class="todo-drag">⠿</div>
+          <div class="todo-drag" id="drag-handle-${i}" title="Hold to reorder">⠿</div>
           <div class="todo-check" onclick="toggleTodoDone(${i})"><div class="todo-check-inner"></div></div>
           <div class="todo-text">${escHtml(t.text)}</div>
           <div class="todo-delete" onclick="deleteTodo(${i})">×</div>
         </div>
-        <div class="todo-needs-row">${needTags}</div>
+        ${hasAssigned ? `<div class="todo-needs-row">${assignedTags}</div>` : ''}
+        <div class="todo-needs-toggle" id="needs-toggle-${i}" onclick="toggleNeedsPanel(${i})">
+          <span class="toggle-arrow">›</span> ${summaryText}
+        </div>
+        <div class="todo-needs-panel" id="needs-panel-${i}">
+          <div class="todo-needs-row">${allNeedTags}</div>
+        </div>
       </div>`;
   }).join('');
+  initTouchDrag();
 }
 
 function renderCoverage() {
@@ -1025,7 +1041,29 @@ function toggleTodoNeed(i, needId) {
   if (idx >= 0) t.needs.splice(idx, 1);
   else t.needs.push(needId);
   saveTodos();
-  renderTodo();
+  // Re-render just this item's assigned tags and toggle label without closing panel
+  const assigned = t.needs;
+  const toggle = document.getElementById('needs-toggle-' + i);
+  const panel = document.getElementById('needs-panel-' + i);
+  const isOpen = panel.classList.contains('open');
+  const hasAssigned = assigned.length > 0;
+  // Update assigned summary row
+  const summaryRow = document.querySelector(`#todo-${i} .todo-needs-row`);
+  const assignedTags = assigned.map(nid => {
+    const n = NEEDS.find(x => x.id === nid);
+    return n ? `<span class="todo-need-tag assigned" onclick="toggleTodoNeed(${i},'${nid}')">${n.name}</span>` : '';
+  }).join('');
+  if (summaryRow) summaryRow.innerHTML = assignedTags;
+  // Update all tags in panel
+  panel.querySelectorAll('.todo-need-tag').forEach(tag => {
+    const nid = NEEDS.find(n => n.name === tag.textContent)?.id;
+    if (nid) tag.classList.toggle('assigned', assigned.includes(nid));
+  });
+  if (toggle) {
+    const label = hasAssigned ? assigned.length + ' need' + (assigned.length>1?'s':'') + ' assigned' + (isOpen ? ' · tap to change' : '') : (isOpen ? 'Tap needs to assign' : 'Assign needs ›');
+    toggle.innerHTML = `<span class="toggle-arrow" ${isOpen?'style="transform:rotate(90deg)"':''}>›</span> ${label}`;
+  }
+  renderCoverage();
 }
 
 function deleteTodo(i) {
@@ -1034,19 +1072,104 @@ function deleteTodo(i) {
   renderTodo();
 }
 
-// Drag and drop
-function dragStart(e, i) { dragSrc = i; e.currentTarget.classList.add('dragging'); }
-function dragOver(e, i) { e.preventDefault(); if (i !== dragSrc) document.getElementById('todo-'+i).classList.add('drag-over'); }
-function dragLeave(e, i) { document.getElementById('todo-'+i).classList.remove('drag-over'); }
-function dragDrop(e, i) {
-  e.preventDefault();
-  document.getElementById('todo-'+i).classList.remove('drag-over');
-  if (dragSrc === null || dragSrc === i) return;
-  const moved = todos.splice(dragSrc, 1)[0];
-  todos.splice(i, 0, moved);
-  dragSrc = null;
-  saveTodos();
-  renderTodo();
+function toggleNeedsPanel(i) {
+  const panel = document.getElementById('needs-panel-' + i);
+  const toggle = document.getElementById('needs-toggle-' + i);
+  const open = panel.classList.toggle('open');
+  toggle.classList.toggle('open', open);
+  const assigned = todos[i].needs || [];
+  const hasAssigned = assigned.length > 0;
+  if (!open) {
+    toggle.innerHTML = `<span class="toggle-arrow">›</span> ${hasAssigned ? assigned.length + ' need' + (assigned.length>1?'s':'') + ' assigned' : 'Assign needs ›'}`;
+  } else {
+    toggle.innerHTML = `<span class="toggle-arrow" style="transform:rotate(90deg)">›</span> ${hasAssigned ? assigned.length + ' need' + (assigned.length>1?'s':'') + ' assigned · tap to change' : 'Tap needs to assign'}`;
+  }
+}
+
+// ─── TOUCH DRAG ───────────────────────────────────────────────────────────────
+
+function initTouchDrag() {
+  const list = document.getElementById('todo-list');
+  let touchDragSrc = null;
+  let placeholder = null;
+  let startY = 0;
+  let currentY = 0;
+  let dragEl = null;
+  let itemHeight = 0;
+
+  list.querySelectorAll('.todo-drag').forEach(handle => {
+    handle.addEventListener('touchstart', onTouchStart, { passive: false });
+  });
+
+  function onTouchStart(e) {
+    const item = e.currentTarget.closest('.todo-item');
+    touchDragSrc = parseInt(item.dataset.index);
+    dragEl = item;
+    itemHeight = item.offsetHeight;
+    startY = e.touches[0].clientY;
+    currentY = startY;
+
+    placeholder = document.createElement('div');
+    placeholder.style.cssText = `height:${itemHeight}px;background:rgba(201,169,110,0.06);border:1px dashed rgba(201,169,110,0.3);border-radius:10px;margin-bottom:8px;`;
+    item.parentNode.insertBefore(placeholder, item.nextSibling);
+
+    item.style.cssText = `position:fixed;width:${item.offsetWidth}px;left:${item.getBoundingClientRect().left}px;top:${item.getBoundingClientRect().top}px;z-index:1000;opacity:0.95;box-shadow:0 8px 32px rgba(0,0,0,0.4);transition:none;`;
+
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
+  }
+
+  function onTouchMove(e) {
+    e.preventDefault();
+    currentY = e.touches[0].clientY;
+    const dy = currentY - startY;
+    dragEl.style.top = (parseFloat(dragEl.style.top) + (currentY - (parseFloat(dragEl.style.top) + itemHeight/2 - window.scrollY + itemHeight/2)) * 0 || dragEl.getBoundingClientRect().top + dy * 0.02) + 'px';
+    dragEl.style.top = (e.touches[0].clientY - itemHeight/2) + 'px';
+
+    // Find target position
+    const items = [...list.querySelectorAll('.todo-item:not([style*="position:fixed"])')];
+    let targetIdx = touchDragSrc;
+    items.forEach((el, i) => {
+      const rect = el.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (currentY > midY) targetIdx = parseInt(el.dataset.index);
+    });
+    if (targetIdx !== touchDragSrc) {
+      const targetEl = document.getElementById('todo-' + targetIdx);
+      if (targetEl && targetEl !== placeholder) {
+        list.insertBefore(placeholder, currentY > targetEl.getBoundingClientRect().top + targetEl.offsetHeight/2 ? targetEl.nextSibling : targetEl);
+      }
+    }
+  }
+
+  function onTouchEnd() {
+    document.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('touchend', onTouchEnd);
+    if (!dragEl) return;
+
+    // Find new index from placeholder position
+    const allChildren = [...list.children];
+    const placeholderIdx = allChildren.indexOf(placeholder);
+    const items = allChildren.filter(el => el.classList.contains('todo-item'));
+    let newIdx = items.length - 1;
+    items.forEach((el, i) => {
+      if (allChildren.indexOf(el) < placeholderIdx) newIdx = i + 1;
+    });
+    if (newIdx > items.length - 1) newIdx = items.length - 1;
+
+    placeholder.remove();
+    dragEl.removeAttribute('style');
+
+    if (newIdx !== touchDragSrc) {
+      const moved = todos.splice(touchDragSrc, 1)[0];
+      const insertAt = newIdx > touchDragSrc ? newIdx - 1 : newIdx;
+      todos.splice(insertAt, 0, moved);
+      saveTodos();
+    }
+    dragEl = null;
+    touchDragSrc = null;
+    renderTodo();
+  }
 }
 
 // ─── BACKUP ───────────────────────────────────────────────────────────────────
